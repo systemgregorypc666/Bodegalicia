@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bodegalicia - Economía Real y Justa</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        /* Estilos específicos para la página de inicio de Bodegalicia */
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: #23242a; /* Fondo oscuro elegante */
+            margin: 0;
+            font-family: 'Poppins', sans-serif;
+            color: white;
+            text-align: center;
+        }
+
+        .hero-section {
+            padding: 50px;
+            background: rgba(28, 28, 28, 0.8);
+            border-radius: 15px;
+            border: 1px solid #00ffcc;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            max-width: 800px;
+            margin: 20px;
+            animation: fadeIn 2s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .hero-section h1 {
+            color: #00ffcc;
+            font-size: 3em;
+            margin-bottom: 10px;
+            letter-spacing: 0.1em;
+            text-shadow: 0 0 10px rgba(0,255,204,0.5);
+        }
+
+        .hero-section p {
+            font-size: 1.2em;
+            color: #8f8f8f;
+            line-height: 1.6;
+            margin-bottom: 30px;
+        }
+
+        .hero-buttons a {
+            display: inline-block;
+            background: #00ffcc;
+            color: #23242a;
+            padding: 12px 25px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 1.1em;
+            margin: 0 15px;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(0,255,204,0.3);
+        }
+
+        .hero-buttons a:hover {
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 0 8px 20px rgba(0,255,204,0.5);
+            background: #00e0b3;
+        }
+
+        .hero-buttons .btn-secondary {
+            background: transparent;
+            border: 2px solid #0055ff;
+            color: #0055ff;
+            box-shadow: 0 5px 15px rgba(0,85,255,0.3);
+        }
+
+        .hero-buttons .btn-secondary:hover {
+            background: rgba(0,85,255,0.2);
+            color: #0055ff;
+            box-shadow: 0 8px 20px rgba(0,85,255,0.5);
+        }
+
+        .footer-note {
+            position: absolute;
+            bottom: 20px;
+            width: 100%;
+            font-size: 0.9em;
+            color: #555;
+        }
+    </style>
+</head>
+<body>
+    <div class="hero-section">
+        <h1>Bodegalicia: Economía Real</h1>
+        <p>Tu tienda de confianza en San Cristóbal, con precios justos y transparentes. 
+           Productos de origen local, colombiano e internacional. 
+           Calidad garantizada, impulsada por <span style="color:#0055ff;">System Gregory PC</span> para el futuro de Alicia.
+        </p>
+        <div class="hero-buttons">
+            <a href="login.html">Ingresar al Catálogo</a>
+            <a href="catalogo.html" class="btn-secondary">Ver Productos (Invitado)</a>
+        </div>
+    </div>
+    <div class="footer-note">
+        <p>Aviso: Este sitio opera bajo Protocolo Anti-Mafia. Todos los derechos reservados.</p>
+    </div>
+</body>
+</html>
