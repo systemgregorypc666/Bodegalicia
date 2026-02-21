@@ -2,50 +2,149 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Caja - Bodegalicia</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Caja Registradora - Bodegalicia</title>
+    
     <link rel="icon" type="image/x-icon" href="img/logo.ico">
+    
     <style>
-        body { background: #0a0a0a; color: white; font-family: sans-serif; display: flex; justify-content: center; padding: 20px; }
-        .caja { background: #1a1a1a; border: 1px solid #00ffcc; padding: 30px; border-radius: 20px; width: 100%; max-width: 400px; }
-        .resumen { background: rgba(0,255,204,0.1); padding: 15px; border-radius: 10px; margin-bottom: 20px; border-left: 5px solid #00ffcc; }
-        input, select { width: 100%; padding: 12px; margin: 10px 0; background: #000; border: 1px solid #333; color: white; border-radius: 8px; box-sizing: border-box; }
-        .btn { width: 100%; background: #00ffcc; color: black; border: none; padding: 15px; border-radius: 10px; font-weight: bold; cursor: pointer; font-size: 1.1em; }
+        body { background: #0a0a0a; color: white; font-family: 'Segoe UI', sans-serif; display: flex; justify-content: center; padding: 20px; }
+        .caja-contenedor { 
+            background: #1a1a1a; 
+            border: 1px solid #00ffcc; 
+            padding: 30px; 
+            border-radius: 20px; 
+            width: 100%; 
+            max-width: 420px; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+        .resumen-compra { 
+            background: rgba(0,255,204,0.05); 
+            padding: 15px; 
+            border-radius: 12px; 
+            margin-bottom: 20px; 
+            border-left: 5px solid #00ffcc;
+        }
+        h2 { color: #00ffcc; text-align: center; margin-top: 0; text-transform: uppercase; letter-spacing: 1px; }
+        label { display: block; margin-top: 15px; color: #888; font-size: 0.85em; }
+        input, select, textarea { 
+            width: 100%; padding: 12px; margin-top: 5px; 
+            background: #000; border: 1px solid #333; 
+            color: white; border-radius: 8px; box-sizing: border-box; 
+            outline: none;
+        }
+        input:focus { border-color: #00ffcc; }
+        .btn-enviar { 
+            width: 100%; background: #00ffcc; color: black; 
+            border: none; padding: 15px; border-radius: 10px; 
+            font-weight: bold; cursor: pointer; font-size: 1.1em; 
+            margin-top: 25px; transition: 0.3s;
+        }
+        .btn-enviar:hover { background: #00ccaa; transform: scale(1.02); }
+        .footer-legal { text-align: center; font-size: 0.7em; color: #444; margin-top: 20px; font-weight: bold; }
     </style>
 </head>
 <body>
-    <div class="caja">
-        <h2 style="color:#00ffcc; text-align:center;">TICKET DE CAJA</h2>
-        <div id="resumen" class="resumen"></div>
-        <input type="text" id="n" placeholder="Nombre completo">
-        <select id="m">
-            <option value="BS">Bolívares (BCV)</option>
-            <option value="COP">Pesos (COP)</option>
-            <option value="USD">Dólares (Zelle/Efectivo)</option>
-            <option value="EUR">Euros (Suiza)</option>
-        </select>
-        <button class="btn" onclick="enviar()">ENVIAR A SYSTEM GREGORY PC</button>
-        <p style="text-align:center; font-size:0.7em; color:#555; margin-top:15px;">CONTRIBUYENTE FORMAL SENIAT - RED ANTI-MAFIA</p>
+
+    <div class="caja-contenedor">
+        <h2>SISTEMA DE COBRO</h2>
+        <div id="resumen" class="resumen-compra">Cargando datos del pedido...</div>
+
+        <form id="formCaja">
+            <label>Nombre del Cliente</label>
+            <input type="text" id="clienteNombre" placeholder="Nombre completo" required>
+
+            <label>Moneda de Pago</label>
+            <select id="monedaPago">
+                <option value="BS">Bolívares (Tasa BCV)</option>
+                <option value="COP">Pesos Colombianos (COP)</option>
+                <option value="USD">Dólares (Zelle / Efectivo)</option>
+                <option value="EUR">Euros (Suiza / Europa)</option>
+            </select>
+
+            <label>Método de Entrega</label>
+            <select id="metodoEntrega" onchange="document.getElementById('dirBloque').style.display=(this.value=='Delivery'?'block':'none')">
+                <option value="Retiro">Retiro Personal (San Cristóbal)</option>
+                <option value="Delivery">Delivery a Domicilio</option>
+            </select>
+
+            <div id="dirBloque" style="display:none;">
+                <label>Dirección Detallada</label>
+                <textarea id="direccion" rows="2" placeholder="Punto de referencia..."></textarea>
+            </div>
+
+            <button type="button" class="btn-enviar" onclick="procesarTicket()">
+                ✅ VALIDAR Y GENERAR TICKET
+            </button>
+        </form>
+
+        <div class="footer-legal">
+            CONTRIBUYENTE FORMAL SENIAT<br>
+            SISTEMA INTEGRADO SYSTEM GREGORY PC
+        </div>
     </div>
 
     <script>
-        const u = new URLSearchParams(window.location.search);
-        const prod = u.get('p'), precio = parseFloat(u.get('pr')), mon = u.get('m');
-        const tBS = parseFloat(u.get('bs')), tCOP = parseFloat(u.get('cop')), tEUR = parseFloat(u.get('eur'));
+        // Obtener datos de la URL enviados desde index.html
+        const urlParams = new URLSearchParams(window.location.search);
+        const productoNombre = urlParams.get('p') || "Producto";
+        const precioDolar = parseFloat(urlParams.get('pr')) || 0;
+        
+        // Tasas recuperadas de la Base de Datos vía URL
+        const tasaBS = parseFloat(urlParams.get('bs')) || 405.35;
+        const tasaCOP = parseFloat(urlParams.get('cop')) || 3950;
+        const tasaEUR = parseFloat(urlParams.get('eur')) || 476.70;
 
-        document.getElementById('resumen').innerHTML = `<b>Orden:</b> ${prod}<br><b>Precio:</b> ${precio} ${mon}`;
+        // Mostrar resumen inicial
+        document.getElementById('resumen').innerHTML = `
+            <strong>Producto:</strong> ${productoNombre}<br>
+            <strong>Ref. Base:</strong> $${precioDolar.toFixed(2)} USD
+        `;
 
-        function enviar() {
-            const cliente = document.getElementById('n').value;
-            const pago = document.getElementById('m').value;
-            if(!cliente) return alert("Falta nombre");
+        function procesarTicket() {
+            const nombre = document.getElementById('clienteNombre').value;
+            const moneda = document.getElementById('monedaPago').value;
+            const entrega = document.getElementById('metodoEntrega').value;
+            const dir = document.getElementById('direccion').value;
 
-            let total = precio;
-            if(pago === "BS") total = (precio * tBS).toFixed(2);
-            if(pago === "COP") total = (precio * tCOP).toLocaleString();
-            if(pago === "EUR") total = ((precio * tBS) / tEUR).toFixed(2);
+            if(!nombre) { alert("Por favor, ingrese el nombre del cliente."); return; }
 
-            const msg = `*BODEGALICIA - TICKET*\nCliente: ${cliente}\nProducto: ${prod}\nTotal: ${total} ${pago}\nJusticia por Venancio - Red Anti-Mafia`;
-            window.open(`https://wa.me/584161177334?text=${encodeURIComponent(msg)}`);
+            let montoCalculado = precioDolar;
+            let formatoMonto = "";
+
+            // LÓGICA MATEMÁTICA SYSTEM GREGORY PC (CORREGIDA)
+            if (moneda === "BS") {
+                montoCalculado = (precioDolar * tasaBS).toFixed(2);
+                formatoMonto = montoCalculado + " BS";
+            } 
+            else if (moneda === "COP") {
+                // Cálculo de pesos sin decimales para evitar confusión
+                montoCalculado = Math.round(precioDolar * tasaCOP);
+                formatoMonto = montoCalculado.toLocaleString('es-CO') + " COP";
+            } 
+            else if (moneda === "EUR") {
+                // Conversión cruzada oficial: (USD * TasaBS) / TasaEUR
+                montoCalculado = ((precioDolar * tasaBS) / tasaEUR).toFixed(2);
+                formatoMonto = montoCalculado + " EUR";
+            } 
+            else {
+                formatoMonto = precioDolar.toFixed(2) + " USD";
+            }
+
+            const telefonoEncargado = "584161177334";
+            const mensajeWA = `*BODEGALICIA - TICKET DE VENTA*\n` +
+                              `--------------------------\n` +
+                              `*Cliente:* ${nombre}\n` +
+                              `*Producto:* ${productoNombre}\n` +
+                              `*Total a Pagar:* ${formatoMonto}\n` +
+                              `*Entrega:* ${entrega}\n` +
+                              (entrega === "Delivery" ? `*Dirección:* ${dir}\n` : "") +
+                              `--------------------------\n` +
+                              `*RED ANTI-MAFIA ACTIVA*\n` +
+                              `*SENIAT - Control Fiscal*`;
+
+            // Ejecución de envío
+            window.open(`https://wa.me/${telefonoEncargado}?text=${encodeURIComponent(mensajeWA)}`, '_blank');
         }
     </script>
 </body>
