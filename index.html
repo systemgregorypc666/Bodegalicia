@@ -3,109 +3,137 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bodegalicia - Economía Real y Justa</title>
+    <title>Bodegalicia - Catálogo de Economía Real</title>
     <link rel="stylesheet" href="style.css">
     <style>
-        /* Estilos específicos para la página de inicio de Bodegalicia */
+        :root {
+            --primary: #00ffcc;
+            --secondary: #0055ff;
+            --glass: rgba(255, 255, 255, 0.1);
+        }
+
         body {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            background: #23242a; /* Fondo oscuro elegante */
-            margin: 0;
-            font-family: 'Poppins', sans-serif;
+            background: #1a1a1a;
             color: white;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            padding: 40px 0;
+        }
+
+        .header h1 {
+            color: var(--primary);
+            text-shadow: 0 0 10px rgba(0,255,204,0.3);
+            margin: 0;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+        }
+
+        .card {
+            background: var(--glass);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 15px;
+            padding: 20px;
+            transition: transform 0.3s;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            border-color: var(--primary);
+        }
+
+        .card h3 { margin: 10px 0; color: #fff; }
+        .card .categoria { font-size: 0.8em; color: var(--primary); text-transform: uppercase; }
+        .card .precio { font-size: 1.5em; font-weight: bold; margin: 15px 0; color: #00ffcc; }
+        .card .origen { font-size: 0.9em; color: #888; margin-bottom: 15px; }
+
+        .btn-pedido {
+            background: var(--secondary);
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            text-decoration: none;
             text-align: center;
         }
 
-        .hero-section {
-            padding: 50px;
-            background: rgba(28, 28, 28, 0.8);
-            border-radius: 15px;
-            border: 1px solid #00ffcc;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            max-width: 800px;
-            margin: 20px;
-            animation: fadeIn 2s ease-in-out;
-        }
+        .btn-pedido:hover { background: #0044cc; }
 
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .hero-section h1 {
-            color: #00ffcc;
-            font-size: 3em;
-            margin-bottom: 10px;
-            letter-spacing: 0.1em;
-            text-shadow: 0 0 10px rgba(0,255,204,0.5);
-        }
-
-        .hero-section p {
-            font-size: 1.2em;
-            color: #8f8f8f;
-            line-height: 1.6;
-            margin-bottom: 30px;
-        }
-
-        .hero-buttons a {
-            display: inline-block;
-            background: #00ffcc;
-            color: #23242a;
-            padding: 12px 25px;
-            border-radius: 8px;
-            text-decoration: none;
-            font-weight: bold;
-            font-size: 1.1em;
-            margin: 0 15px;
-            transition: all 0.3s ease;
-            box-shadow: 0 5px 15px rgba(0,255,204,0.3);
-        }
-
-        .hero-buttons a:hover {
-            transform: translateY(-3px) scale(1.02);
-            box-shadow: 0 8px 20px rgba(0,255,204,0.5);
-            background: #00e0b3;
-        }
-
-        .hero-buttons .btn-secondary {
-            background: transparent;
-            border: 2px solid #0055ff;
-            color: #0055ff;
-            box-shadow: 0 5px 15px rgba(0,85,255,0.3);
-        }
-
-        .hero-buttons .btn-secondary:hover {
-            background: rgba(0,85,255,0.2);
-            color: #0055ff;
-            box-shadow: 0 8px 20px rgba(0,85,255,0.5);
-        }
-
-        .footer-note {
-            position: absolute;
-            bottom: 20px;
-            width: 100%;
-            font-size: 0.9em;
-            color: #555;
-        }
+        #loading { text-align: center; font-size: 1.2em; color: var(--primary); }
     </style>
 </head>
 <body>
-    <div class="hero-section">
-        <h1>Bodegalicia: Economía Real</h1>
-        <p>Tu tienda de confianza en San Cristóbal, con precios justos y transparentes. 
-           Productos de origen local, venezolano, colombiano e internacional. 
-           Calidad garantizada, impulsada por <span style="color:#0055ff;">System Gregory PC</span> para el futuro de Alicia.
-        </p>
-        <div class="hero-buttons">
-            <a href="login.html">Ingresar al Catálogo</a>
-            <a href="catalogo.html" class="btn-secondary">Ver Productos (Invitado)</a>
-        </div>
+
+    <div class="header">
+        <h1>Bodegalicia</h1>
+        <p>Economía Real y Justa para San Cristóbal</p>
     </div>
-    <div class="footer-note">
-        <p>Aviso: Este sitio opera bajo Protocolo Anti-Mafia. Todos los derechos reservados.</p>
-    </div>
+
+    <div id="loading">Cargando productos de la base de datos...</div>
+    <div class="container" id="productos-container"></div>
+
+    <script>
+        const sheetUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQKmBLmpMK79baNFgQ3DqYnnWnQwOtW9IXnHdxDVAeohbx_zCE440RUVv7Ep5_2Sd1vHmpjgicXQATw/pub?output=csv';
+
+        async function cargarProductos() {
+            try {
+                const response = await fetch(sheetUrl);
+                const data = await response.text();
+                const filas = data.split('\n').slice(1); // Omitir encabezados
+                const container = document.getElementById('productos-container');
+                document.getElementById('loading').style.display = 'none';
+
+                filas.forEach(fila => {
+                    const columnas = fila.split(',');
+                    if(columnas.length < 5) return;
+
+                    const [id, nombre, categoria, origen, precio, moneda, stock, img, desc] = columnas;
+
+                    const card = document.createElement('div');
+                    card.className = 'card';
+                    card.innerHTML = `
+                        <div>
+                            <span class="categoria">${categoria}</span>
+                            <h3>${nombre}</h3>
+                            <p class="origen">Origen: ${origen}</p>
+                            <p>${desc || 'Producto de alta calidad.'}</p>
+                        </div>
+                        <div>
+                            <div class="precio">${precio} ${moneda}</div>
+                            <button class="btn-pedido" onclick="hacerPedido('${nombre}', '${precio}', '${moneda}')">Pedir por WhatsApp</button>
+                        </div>
+                    `;
+                    container.appendChild(card);
+                });
+            } catch (error) {
+                console.error('Error cargando base de datos:', error);
+                document.getElementById('loading').innerText = 'Error al conectar con la base de datos.';
+            }
+        }
+
+        function hacerPedido(producto, precio, moneda) {
+            const tel = "584161177334";
+            const msg = `Hola Bodegalicia, deseo un pedido:\nProducto: ${producto}\nPrecio: ${precio} ${moneda}\nProtocolo Anti-Mafia Activo.`;
+            window.open(`https://wa.me/${tel}?text=${encodeURIComponent(msg)}`, '_blank');
+        }
+
+        cargarProductos();
+    </script>
 </body>
 </html>
