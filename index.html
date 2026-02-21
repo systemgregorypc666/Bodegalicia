@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bodegalicia - Catálogo de Economía Real</title>
-    
     <style>
         :root {
             --primary: #00ffcc;
@@ -46,7 +45,7 @@
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
             gap: 25px;
-            flex: 1; /* Empuja el footer hacia abajo */
+            flex: 1;
         }
 
         .card {
@@ -60,55 +59,30 @@
             transition: all 0.4s ease;
         }
 
-        .card:hover {
-            transform: translateY(-10px);
-            border-color: var(--primary);
-        }
+        .card:hover { transform: translateY(-10px); border-color: var(--primary); }
 
         .img-producto {
-            width: 100%;
-            height: 200px;
-            object-fit: cover;
-            border-radius: 12px;
-            margin-bottom: 15px;
+            width: 100%; height: 200px; object-fit: cover;
+            border-radius: 12px; margin-bottom: 15px;
             border: 1px solid var(--glass-border);
         }
 
-        .categoria {
-            color: var(--secondary);
-            font-size: 0.75em;
-            font-weight: bold;
-            text-transform: uppercase;
-        }
-
         .precio-valor {
-            font-size: 1.8em;
-            color: var(--primary);
-            font-weight: 800;
-            margin: 15px 0;
+            font-size: 1.8em; color: var(--primary);
+            font-weight: 800; margin: 15px 0;
         }
 
         .btn-pedido {
             background: var(--secondary);
-            color: white;
-            border: none;
-            padding: 15px;
-            border-radius: 12px;
-            font-weight: bold;
-            cursor: pointer;
-            text-align: center;
-            text-decoration: none;
+            color: white; border: none; padding: 15px;
+            border-radius: 12px; font-weight: bold;
+            cursor: pointer; text-align: center; text-decoration: none;
         }
 
-        /* Estilo del Footer solicitado */
         footer {
-            text-align: center;
-            padding: 30px;
-            background: rgba(0,0,0,0.3);
-            border-top: 1px solid var(--glass-border);
-            color: #888;
-            font-size: 0.9em;
-            margin-top: 40px;
+            text-align: center; padding: 30px;
+            background: rgba(0,0,0,0.3); border-top: 1px solid var(--glass-border);
+            color: #888; font-size: 0.9em; margin-top: 40px;
         }
 
         #loading { text-align: center; padding: 50px; color: var(--primary); }
@@ -122,7 +96,6 @@
     </div>
 
     <div id="loading">Conectando con la base de datos de System Gregory PC...</div>
-    
     <div class="container" id="productos-container"></div>
 
     <footer>
@@ -148,35 +121,53 @@
                     const columnas = fila.split(',');
                     if (columnas.length >= 6) {
                         const [id, nombre, categoria, origen, precio, moneda, stock, img, desc] = columnas;
-
-                        // Lógica de imagen: si no hay URL, no se muestra el espacio
-                        const imagenHTML = img && img.trim() !== "" 
-                            ? `<img src="${img}" class="img-producto" alt="${nombre}">` 
-                            : "";
+                        const imagenHTML = img && img.trim() !== "" ? `<img src="${img}" class="img-producto">` : "";
 
                         container.innerHTML += `
                             <div class="card">
                                 ${imagenHTML}
-                                <span class="categoria">${categoria}</span>
+                                <span style="color:var(--secondary); font-size:0.75em; font-weight:bold;">${categoria}</span>
                                 <h3>${nombre}</h3>
                                 <small style="color:#aaa">📍 Origen: ${origen}</small>
-                                <p style="font-size:0.9em; color:#ddd">${desc || "Calidad garantizada."}</p>
                                 <div class="precio-valor">${precio} ${moneda}</div>
-                                <button class="btn-pedido" onclick="enviarWhatsApp('${nombre}', '${precio}', '${moneda}')">
+                                <button class="btn-pedido" onclick="iniciarProcesoPedido('${nombre}', '${precio}', '${moneda}')">
                                     🛒 Hacer Pedido
                                 </button>
                             </div>
                         `;
                     }
                 });
-            } catch (e) {
-                loading.innerText = '⚠️ Error al cargar datos.';
-            }
+            } catch (e) { loading.innerText = '⚠️ Error al cargar datos.'; }
         }
 
-        function enviarWhatsApp(p, pr, m) {
+        function iniciarProcesoPedido(producto, precio, moneda) {
+            // 1. Preguntar Forma de Pago
+            const metodosPago = "Seleccione Forma de Pago:\n1. Pago Móvil / Transf. (BS)\n2. Nequi (COP)\n3. Banca EEUU (Zelle)\n4. Suiza / Euro (EUR)\n5. Efectivo";
+            const seleccionPago = prompt(metodosPago, "1");
+            
+            const pagos = {"1":"BS", "2":"Nequi (COP)", "3":"Zelle (USD)", "4":"Suiza (EUR)", "5":"Efectivo"};
+            const pagoFinal = pagos[seleccionPago] || "Efectivo";
+
+            // 2. Preguntar Delivery o Retiro
+            const modoEntrega = "Información de Entrega:\n1. Delivery (Domicilio)\n2. Retiro Personal (San Cristóbal)";
+            const seleccionEntrega = prompt(modoEntrega, "1");
+            
+            const entregaFinal = seleccionEntrega === "1" ? "Delivery (A domicilio)" : "Retiro Personal";
+
+            enviarWhatsApp(producto, precio, moneda, pagoFinal, entregaFinal);
+        }
+
+        function enviarWhatsApp(p, pr, m, pago, entrega) {
             const tel = "584161177334";
-            const msg = `*BODEGALICIA*\nNuevo pedido: *${p}*\nPrecio: ${pr} ${m}\nProtocolo Anti-Mafia Activo.`;
+            const msg = `*BODEGALICIA - NUEVO PEDIDO*\n` +
+                        `--------------------------\n` +
+                        `*Producto:* ${p}\n` +
+                        `*Precio:* ${pr} ${m}\n` +
+                        `*Pago:* ${pago}\n` +
+                        `*Entrega:* ${entrega}\n` +
+                        `--------------------------\n` +
+                        `*Protocolo Anti-Mafia Activo.*\n` +
+                        `System Gregory PC - 2026`;
             window.open(`https://wa.me/${tel}?text=${encodeURIComponent(msg)}`, '_blank');
         }
 
