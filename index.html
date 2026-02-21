@@ -6,119 +6,79 @@
     <title>Bodegalicia - Economía Real</title>
     <link rel="icon" type="image/x-icon" href="img/logo.ico">
     <style>
-        :root {
-            --primary: #00ffcc;
-            --secondary: #0055ff;
-            --bg-dark: #121212;
-            --glass: rgba(255, 255, 255, 0.05);
-            --glass-border: rgba(255, 255, 255, 0.1);
-        }
-        body {
-            background-color: var(--bg-dark);
-            color: #ffffff;
-            font-family: 'Segoe UI', sans-serif;
-            margin: 0;
-            display: flex;
-            flex-direction: column;
-            min-height: 100vh;
-        }
-        .header {
-            text-align: center;
-            padding: 40px 20px;
-            background: linear-gradient(180deg, #1a1a1a 0%, var(--bg-dark) 100%);
-        }
-        .logo-principal {
-            width: 140px;
-            height: auto;
-            border-radius: 50%;
-            border: 2px solid var(--primary);
-            margin-bottom: 15px;
-        }
-        .header h1 { font-size: 2.5em; color: var(--primary); margin: 0; text-transform: uppercase; }
-        .tasa-info { color: #888; font-size: 0.9em; margin-top: 10px; }
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 25px;
-            flex: 1;
-        }
-        .card {
-            background: var(--glass);
-            backdrop-filter: blur(10px);
-            border: 1px solid var(--glass-border);
-            border-radius: 20px;
-            padding: 20px;
-            transition: 0.4s;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-        }
-        .card:hover { transform: translateY(-5px); border-color: var(--primary); }
-        .img-producto { width: 100%; height: 180px; object-fit: cover; border-radius: 12px; margin-bottom: 15px; }
-        .precio-valor { font-size: 1.6em; color: var(--primary); font-weight: bold; margin: 10px 0; }
-        .btn-pedido {
-            background: var(--secondary);
-            color: white; border: none; padding: 12px;
-            border-radius: 10px; font-weight: bold; cursor: pointer; width: 100%;
-        }
-        footer { text-align: center; padding: 25px; border-top: 1px solid var(--glass-border); color: #666; font-size: 0.8em; }
-        #loading { text-align: center; padding: 50px; color: var(--primary); }
+        :root { --p: #00ffcc; --s: #0055ff; --bg: #121212; }
+        body { background: var(--bg); color: white; font-family: 'Segoe UI', sans-serif; margin: 0; }
+        .header { text-align: center; padding: 40px; background: linear-gradient(180deg, #1a1a1a, var(--bg)); }
+        .logo-principal { width: 120px; border-radius: 50%; border: 2px solid var(--p); }
+        .tasa-info { color: var(--p); font-size: 0.9em; margin-top: 10px; font-weight: bold; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
+        .card { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; padding: 20px; display: flex; flex-direction: column; justify-content: space-between; transition: 0.3s; }
+        .card:hover { border-color: var(--p); transform: translateY(-5px); }
+        .img-p { width: 100%; height: 180px; object-fit: cover; border-radius: 12px; }
+        .btn-pedido { background: var(--s); color: white; border: none; padding: 12px; border-radius: 10px; cursor: pointer; font-weight: bold; }
+        #loading { text-align: center; padding: 50px; color: var(--p); }
     </style>
 </head>
 <body>
     <div class="header">
         <img src="img/logo.jpg" alt="Bodegalicia" class="logo-principal">
         <h1>Bodegalicia</h1>
-        <div class="tasa-info">Ref: 1 USD = 401.83 BS | 1 EUR = 464.03 BS</div>
+        <div id="tasas-hoy" class="tasa-info">Cargando tasas de System Gregory PC...</div>
     </div>
-    <div id="loading">Consultando base de datos System Gregory PC...</div>
+    <div id="loading">Sincronizando con base de datos...</div>
     <div class="container" id="productos-container"></div>
-    <footer>
-        2026 @ Bodegalicia - Desarrollado por **System Gregory PC** para Alicia.
-    </footer>
 
     <script>
         const SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQKmBLmpMK79baNFgQ3DqYnnWnQwOtW9IXnHdxDVAeohbx_zCE440RUVv7Ep5_2Sd1vHmpjgicXQATw/pub?output=csv';
+        
+        // Tasas por defecto (se actualizarán con el Excel)
+        let TASA_BS = 401.83;
+        let TASA_COP = 3950;
+        let TASA_EUR = 464.03;
 
-        async function cargarInventario() {
-            const container = document.getElementById('productos-container');
+        async function iniciar() {
             try {
-                const response = await fetch(SHEET_URL);
-                const data = await response.text();
-                const filas = data.split('\n').filter(f => f.trim() !== "").slice(1);
-                document.getElementById('loading').style.display = 'none';
+                const res = await fetch(SHEET_URL);
+                const csv = await res.text();
+                const filas = csv.split('\n').map(f => f.split(','));
                 
-                filas.forEach(fila => {
-                    const col = fila.split(',');
-                    if (col.length >= 6) {
-                        const [id, nombre, cat, origen, precio, moneda, stock, img, desc] = col.map(c => c.replace(/"/g, "").trim());
+                // Buscador de tasas en el Excel
+                filas.forEach(col => {
+                    const texto = col.join(" ").toUpperCase();
+                    if(texto.includes("BS")) TASA_BS = parseFloat(col[col.length-1]) || TASA_BS;
+                    if(texto.includes("COP")) TASA_COP = parseFloat(col[col.length-1]) || TASA_COP;
+                    if(texto.includes("EUR")) TASA_EUR = parseFloat(col[col.length-1]) || TASA_EUR;
+                });
+
+                document.getElementById('tasas-hoy').innerText = `Tasa: $1 = ${TASA_BS} BS | $1 = ${TASA_COP} COP`;
+                
+                const container = document.getElementById('productos-container');
+                document.getElementById('loading').style.display = 'none';
+
+                filas.slice(1).forEach(col => {
+                    if (col.length >= 5 && !col.join("").includes("Moneda")) {
+                        const [id, nombre, cat, origen, precio, moneda, stock, img] = col.map(c => c.replace(/"/g, "").trim());
                         container.innerHTML += `
                             <div class="card">
                                 <div>
-                                    ${img ? `<img src="${img}" class="img-producto">` : ''}
-                                    <span style="color:var(--secondary); font-size:0.7em; font-weight:bold;">${cat}</span>
-                                    <h3 style="margin:5px 0;">${nombre}</h3>
-                                    <p style="font-size:0.8em; color:#aaa;">📍 ${origen}</p>
+                                    ${img ? `<img src="${img}" class="img-p">` : ''}
+                                    <small style="color:var(--s)">${cat}</small>
+                                    <h3>${nombre}</h3>
                                 </div>
                                 <div>
-                                    <div class="precio-valor">${precio} ${moneda}</div>
-                                    <button class="btn-pedido" onclick="irACaja('${nombre}', '${precio}', '${moneda}')">
-                                        🛒 Seleccionar Producto
-                                    </button>
+                                    <div style="font-size:1.5em; color:var(--p); margin:10px 0;">${precio} ${moneda}</div>
+                                    <button class="btn-pedido" onclick="irCaja('${nombre}', '${precio}', '${moneda}')">🛒 Comprar</button>
                                 </div>
-                            </div>
-                        `;
+                            </div>`;
                     }
                 });
-            } catch (e) { document.getElementById('loading').innerText = "Error de conexión."; }
+            } catch (e) { console.error(e); }
         }
-        function irACaja(p, pr, m) {
-            window.location.href = `caja_registradora.html?p=${encodeURIComponent(p)}&pr=${pr}&m=${m}`;
+
+        function irCaja(p, pr, m) {
+            window.location.href = `caja_registradora.html?p=${encodeURIComponent(p)}&pr=${pr}&m=${m}&bs=${TASA_BS}&cop=${TASA_COP}&eur=${TASA_EUR}`;
         }
-        window.onload = cargarInventario;
+        window.onload = iniciar;
     </script>
 </body>
 </html>
