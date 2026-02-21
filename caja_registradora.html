@@ -4,21 +4,19 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Caja Registradora - Bodegalicia</title>
-    <link rel="stylesheet" href="style.css">
     <style>
-        body { background: #121212; color: white; font-family: sans-serif; padding: 20px; }
-        .checkout-card {
+        body { background: #121212; color: white; font-family: 'Segoe UI', sans-serif; padding: 20px; }
+        .caja-card {
             background: rgba(255,255,255,0.05);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(0,255,204,0.3);
+            border: 1px solid #00ffcc;
             border-radius: 20px;
-            padding: 30px;
-            max-width: 500px;
+            padding: 25px;
+            max-width: 450px;
             margin: 0 auto;
         }
-        h2 { color: #00ffcc; text-align: center; }
-        .item-resumen { background: rgba(0,85,255,0.2); padding: 15px; border-radius: 10px; margin-bottom: 20px; border-left: 4px solid #0055ff; }
-        label { display: block; margin-top: 15px; color: #aaa; font-size: 0.9em; }
+        h2 { color: #00ffcc; text-align: center; margin-bottom: 20px; border-bottom: 1px solid #333; padding-bottom: 10px; }
+        .resumen-item { background: rgba(0,85,255,0.1); padding: 15px; border-radius: 10px; margin-bottom: 20px; }
+        label { display: block; margin-top: 15px; color: #aaa; font-size: 0.85em; }
         input, select, textarea {
             width: 100%; padding: 12px; margin-top: 5px;
             background: #1a1a1a; border: 1px solid #333;
@@ -29,21 +27,19 @@
             border: none; padding: 15px; margin-top: 25px;
             border-radius: 10px; font-weight: bold; cursor: pointer;
         }
+        .seniat-footer { text-align: center; color: #444; font-size: 0.7em; margin-top: 20px; }
     </style>
 </head>
 <body>
-
-    <div class="checkout-card">
-        <h2>🛒 Caja Registradora</h2>
-        
-        <div class="item-resumen" id="resumen">
-            </div>
+    <div class="caja-card">
+        <h2>📑 CAJA REGISTRADORA</h2>
+        <div class="resumen-item" id="resumen">Cargando datos del pedido...</div>
 
         <form id="formPedido">
-            <label>Nombre del Cliente</label>
-            <input type="text" id="nombre" placeholder="Ej. Juan Pérez" required>
+            <label>Nombre y Apellido</label>
+            <input type="text" id="nombre" placeholder="Nombre del cliente" required>
 
-            <label>Método de Pago</label>
+            <label>Forma de Pago</label>
             <select id="pago">
                 <option value="Pago Movil / BS">Pago Móvil / Transferencia (BS)</option>
                 <option value="Nequi / COP">Nequi (COP)</option>
@@ -53,58 +49,63 @@
             </select>
 
             <label>Tipo de Entrega</label>
-            <select id="entrega" onchange="toggleDireccion()">
+            <select id="entrega" onchange="document.getElementById('campoDir').style.display = (this.value=='Delivery'?'block':'none')">
                 <option value="Retiro Personal">Retiro Personal (San Cristóbal)</option>
-                <option value="Delivery">Delivery (A domicilio)</option>
+                <option value="Delivery">Delivery a Domicilio</option>
             </select>
 
-            <div id="campoDireccion" style="display:none;">
-                <label>Dirección Detallada</label>
-                <textarea id="direccion" placeholder="Calle, número de casa, punto de referencia..."></textarea>
+            <div id="campoDir" style="display:none;">
+                <label>Dirección de Entrega</label>
+                <textarea id="direccion" placeholder="Calle, punto de referencia..."></textarea>
             </div>
 
-            <button type="button" class="btn-confirmar" onclick="enviarPedido()">
-                ✅ CONFIRMAR Y ENVIAR WHATSAPP
+            <button type="button" class="btn-confirmar" onclick="enviarWhatsApp()">
+                ✅ VALIDAR Y ENVIAR PEDIDO
             </button>
         </form>
+        <div class="seniat-footer">BODEGALICIA - CONTRIBUYENTE FORMAL SENIAT</div>
     </div>
 
     <script>
-        // Capturar datos de la URL (lo que viene del index.html)
         const params = new URLSearchParams(window.location.search);
         const producto = params.get('p') || "Producto";
-        const precio = params.get('pr') || "0";
-        const moneda = params.get('m') || "";
+        const precioBase = parseFloat(params.get('pr')) || 0;
+        const monedaBase = params.get('m') || "USD";
+
+        const TASAS = { "BS": 401.83, "COP": 3950, "EUR_REF": 464.03 };
 
         document.getElementById('resumen').innerHTML = `
-            <strong>Producto:</strong> ${producto}<br>
-            <strong>Total:</strong> ${precio} ${moneda}
+            <strong>Orden:</strong> ${producto}<br>
+            <strong>Monto Ref:</strong> ${precioBase} ${monedaBase}
         `;
 
-        function toggleDireccion() {
-            const entrega = document.getElementById('entrega').value;
-            document.getElementById('campoDireccion').style.display = (entrega === "Delivery") ? "block" : "none";
-        }
-
-        function enviarPedido() {
+        function enviarWhatsApp() {
             const cliente = document.getElementById('nombre').value;
             const pago = document.getElementById('pago').value;
             const entrega = document.getElementById('entrega').value;
-            const direccion = document.getElementById('direccion').value;
+            const dir = document.getElementById('direccion').value;
 
-            if(!cliente) { alert("Por favor, ingrese su nombre."); return; }
+            if(!cliente) return alert("Ingrese su nombre");
+
+            let total = precioBase;
+            let simbolo = monedaBase;
+
+            if(pago.includes("BS")) { total = (precioBase * TASAS.BS).toFixed(2); simbolo = "BS"; }
+            else if(pago.includes("COP")) { total = (precioBase * TASAS.COP).toLocaleString(); simbolo = "COP"; }
+            else if(pago.includes("EUR")) { total = ( (precioBase * TASAS.BS) / TASAS.EUR_REF ).toFixed(2); simbolo = "EUR"; }
 
             const tel = "584161177334";
-            const texto = `*BODEGALICIA - NUEVA ORDEN*\n` +
+            const texto = `*BODEGALICIA - TICKET DE CAJA*\n` +
                           `--------------------------\n` +
                           `*Cliente:* ${cliente}\n` +
                           `*Producto:* ${producto}\n` +
-                          `*Monto:* ${precio} ${moneda}\n` +
+                          `*Monto Final:* ${total} ${simbolo}\n` +
                           `*Pago:* ${pago}\n` +
                           `*Entrega:* ${entrega}\n` +
-                          (entrega === "Delivery" ? `*Dirección:* ${direccion}\n` : "") +
+                          (entrega=="Delivery" ? `*Dirección:* ${dir}\n` : "") +
                           `--------------------------\n` +
-                          `*Protocolo Anti-Mafia Activo*`;
+                          `*SENIAT: Contribuyente Formal*\n` +
+                          `*System Gregory PC - 2026*`;
 
             window.open(`https://wa.me/${tel}?text=${encodeURIComponent(texto)}`, '_blank');
         }
