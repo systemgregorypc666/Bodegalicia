@@ -38,6 +38,8 @@
             text-shadow: 0 0 15px rgba(0, 255, 204, 0.3);
         }
 
+        .header p { color: #888; font-style: italic; margin-top: 10px; }
+
         .container {
             max-width: 1200px;
             margin: 0 auto;
@@ -56,36 +58,68 @@
             padding: 20px;
             display: flex;
             flex-direction: column;
+            justify-content: space-between;
             transition: all 0.4s ease;
         }
 
-        .card:hover { transform: translateY(-10px); border-color: var(--primary); }
+        .card:hover {
+            transform: translateY(-10px);
+            border-color: var(--primary);
+            box-shadow: 0 10px 30px rgba(0, 255, 204, 0.1);
+        }
 
         .img-producto {
-            width: 100%; height: 200px; object-fit: cover;
-            border-radius: 12px; margin-bottom: 15px;
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            border-radius: 12px;
+            margin-bottom: 15px;
             border: 1px solid var(--glass-border);
         }
 
+        .categoria {
+            color: var(--secondary);
+            font-size: 0.75em;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
         .precio-valor {
-            font-size: 1.8em; color: var(--primary);
-            font-weight: 800; margin: 15px 0;
+            font-size: 1.8em;
+            color: var(--primary);
+            font-weight: 800;
+            margin: 15px 0;
         }
 
         .btn-pedido {
             background: var(--secondary);
-            color: white; border: none; padding: 15px;
-            border-radius: 12px; font-weight: bold;
-            cursor: pointer; text-align: center; text-decoration: none;
+            color: white;
+            border: none;
+            padding: 15px;
+            border-radius: 12px;
+            font-weight: bold;
+            cursor: pointer;
+            text-align: center;
+            text-decoration: none;
+            transition: 0.3s;
+        }
+
+        .btn-pedido:hover {
+            background: #0044cc;
+            box-shadow: 0 0 20px rgba(0, 85, 255, 0.4);
         }
 
         footer {
-            text-align: center; padding: 30px;
-            background: rgba(0,0,0,0.3); border-top: 1px solid var(--glass-border);
-            color: #888; font-size: 0.9em; margin-top: 40px;
+            text-align: center;
+            padding: 30px;
+            background: rgba(0,0,0,0.3);
+            border-top: 1px solid var(--glass-border);
+            color: #888;
+            font-size: 0.9em;
+            margin-top: 40px;
         }
 
-        #loading { text-align: center; padding: 50px; color: var(--primary); }
+        #loading { text-align: center; padding: 50px; color: var(--primary); font-size: 1.2em; }
     </style>
 </head>
 <body>
@@ -96,6 +130,7 @@
     </div>
 
     <div id="loading">Conectando con la base de datos de System Gregory PC...</div>
+    
     <div class="container" id="productos-container"></div>
 
     <footer>
@@ -103,6 +138,7 @@
     </footer>
 
     <script>
+        // Enlace de tu Google Sheets (CSV)
         const SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQKmBLmpMK79baNFgQ3DqYnnWnQwOtW9IXnHdxDVAeohbx_zCE440RUVv7Ep5_2Sd1vHmpjgicXQATw/pub?output=csv';
 
         async function cargarInventario() {
@@ -112,7 +148,8 @@
             try {
                 const response = await fetch(SHEET_URL);
                 const data = await response.text();
-                const filas = data.split('\n').slice(1); 
+                // Dividir filas y limpiar posibles espacios vacíos
+                const filas = data.split('\n').filter(f => f.trim() !== "").slice(1); 
                 
                 loading.style.display = 'none';
                 container.innerHTML = '';
@@ -121,54 +158,44 @@
                     const columnas = fila.split(',');
                     if (columnas.length >= 6) {
                         const [id, nombre, categoria, origen, precio, moneda, stock, img, desc] = columnas;
-                        const imagenHTML = img && img.trim() !== "" ? `<img src="${img}" class="img-producto">` : "";
+
+                        // Limpiar comillas si el CSV las incluye
+                        const n = nombre.replace(/"/g, "");
+                        const p = precio.replace(/"/g, "");
+                        const m = moneda.replace(/"/g, "");
+                        const i = img ? img.replace(/"/g, "").trim() : "";
+
+                        const imagenHTML = i !== "" ? `<img src="${i}" class="img-producto" alt="${n}">` : "";
 
                         container.innerHTML += `
                             <div class="card">
-                                ${imagenHTML}
-                                <span style="color:var(--secondary); font-size:0.75em; font-weight:bold;">${categoria}</span>
-                                <h3>${nombre}</h3>
-                                <small style="color:#aaa">📍 Origen: ${origen}</small>
-                                <div class="precio-valor">${precio} ${moneda}</div>
-                                <button class="btn-pedido" onclick="iniciarProcesoPedido('${nombre}', '${precio}', '${moneda}')">
-                                    🛒 Hacer Pedido
-                                </button>
+                                <div>
+                                    ${imagenHTML}
+                                    <span class="categoria">${categoria.replace(/"/g, "")}</span>
+                                    <h3>${n}</h3>
+                                    <small style="color:#aaa">📍 Origen: ${origen.replace(/"/g, "")}</small>
+                                    <p style="font-size:0.9em; color:#ddd; margin-top:10px;">${desc ? desc.replace(/"/g, "") : "Calidad garantizada."}</p>
+                                </div>
+                                <div>
+                                    <div class="precio-valor">${p} ${m}</div>
+                                    <button class="btn-pedido" onclick="irACaja('${n}', '${p}', '${m}')">
+                                        🛒 Seleccionar Producto
+                                    </button>
+                                </div>
                             </div>
                         `;
                     }
                 });
-            } catch (e) { loading.innerText = '⚠️ Error al cargar datos.'; }
+            } catch (error) {
+                console.error('Error:', error);
+                loading.innerHTML = '⚠️ Error: No se pudo conectar con la base de datos de Bodegalicia.';
+            }
         }
 
-        function iniciarProcesoPedido(producto, precio, moneda) {
-            // 1. Preguntar Forma de Pago
-            const metodosPago = "Seleccione Forma de Pago:\n1. Pago Móvil / Transf. (BS)\n2. Nequi (COP)\n3. Banca EEUU (Zelle)\n4. Suiza / Euro (EUR)\n5. Efectivo";
-            const seleccionPago = prompt(metodosPago, "1");
-            
-            const pagos = {"1":"BS", "2":"Nequi (COP)", "3":"Zelle (USD)", "4":"Suiza (EUR)", "5":"Efectivo"};
-            const pagoFinal = pagos[seleccionPago] || "Efectivo";
-
-            // 2. Preguntar Delivery o Retiro
-            const modoEntrega = "Información de Entrega:\n1. Delivery (Domicilio)\n2. Retiro Personal (San Cristóbal)";
-            const seleccionEntrega = prompt(modoEntrega, "1");
-            
-            const entregaFinal = seleccionEntrega === "1" ? "Delivery (A domicilio)" : "Retiro Personal";
-
-            enviarWhatsApp(producto, precio, moneda, pagoFinal, entregaFinal);
-        }
-
-        function enviarWhatsApp(p, pr, m, pago, entrega) {
-            const tel = "584161177334";
-            const msg = `*BODEGALICIA - NUEVO PEDIDO*\n` +
-                        `--------------------------\n` +
-                        `*Producto:* ${p}\n` +
-                        `*Precio:* ${pr} ${m}\n` +
-                        `*Pago:* ${pago}\n` +
-                        `*Entrega:* ${entrega}\n` +
-                        `--------------------------\n` +
-                        `*Protocolo Anti-Mafia Activo.*\n` +
-                        `System Gregory PC - 2026`;
-            window.open(`https://wa.me/${tel}?text=${encodeURIComponent(msg)}`, '_blank');
+        // Función Maestra: Redirige a la Caja Registradora con los datos
+        function irACaja(producto, precio, moneda) {
+            const urlDestino = `caja_registradora.html?p=${encodeURIComponent(producto)}&pr=${encodeURIComponent(precio)}&m=${encodeURIComponent(moneda)}`;
+            window.location.href = urlDestino;
         }
 
         window.onload = cargarInventario;
