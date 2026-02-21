@@ -3,82 +3,74 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bodegalicia - Economía Real</title>
+    <title>Bodegalicia - Sistema Anti-Mafia</title>
     <link rel="icon" type="image/x-icon" href="img/logo.ico">
     <style>
-        :root { --p: #00ffcc; --s: #0055ff; --bg: #121212; }
+        :root { --p: #00ffcc; --s: #0055ff; --bg: #0a0a0a; }
         body { background: var(--bg); color: white; font-family: 'Segoe UI', sans-serif; margin: 0; }
-        .header { text-align: center; padding: 40px; background: linear-gradient(180deg, #1a1a1a, var(--bg)); }
-        .logo-principal { width: 120px; border-radius: 50%; border: 2px solid var(--p); }
-        .tasa-info { color: var(--p); font-size: 0.9em; margin-top: 10px; font-weight: bold; }
+        .header { text-align: center; padding: 30px; background: linear-gradient(180deg, #1a1a1a, var(--bg)); border-bottom: 2px solid var(--p); }
+        .logo-principal { width: 120px; border-radius: 50%; border: 2px solid var(--p); margin-bottom: 10px; }
+        .tasa-box { background: rgba(0,255,204,0.1); border: 1px solid var(--p); padding: 10px; border-radius: 10px; display: inline-block; margin-top: 10px; font-family: monospace; }
         .container { max-width: 1200px; margin: 0 auto; padding: 20px; display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
-        .card { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; padding: 20px; display: flex; flex-direction: column; justify-content: space-between; transition: 0.3s; }
-        .card:hover { border-color: var(--p); transform: translateY(-5px); }
+        .card { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; padding: 20px; text-align: center; }
         .img-p { width: 100%; height: 180px; object-fit: cover; border-radius: 12px; }
-        .btn-pedido { background: var(--s); color: white; border: none; padding: 12px; border-radius: 10px; cursor: pointer; font-weight: bold; }
-        #loading { text-align: center; padding: 50px; color: var(--p); }
+        .btn-pedido { background: var(--s); color: white; border: none; padding: 12px 25px; border-radius: 10px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 15px; }
     </style>
 </head>
 <body>
     <div class="header">
         <img src="img/logo.jpg" alt="Bodegalicia" class="logo-principal">
-        <h1>Bodegalicia</h1>
-        <div id="tasas-hoy" class="tasa-info">Cargando tasas de System Gregory PC...</div>
+        <h1>BODEGALICIA</h1>
+        <div id="tasas-hoy" class="tasa-box">Sincronizando BCV...</div>
     </div>
-    <div id="loading">Sincronizando con base de datos...</div>
     <div class="container" id="productos-container"></div>
 
     <script>
         const SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQKmBLmpMK79baNFgQ3DqYnnWnQwOtW9IXnHdxDVAeohbx_zCE440RUVv7Ep5_2Sd1vHmpjgicXQATw/pub?output=csv';
         
-        // Tasas por defecto (se actualizarán con el Excel)
-        let TASA_BS = 401.83;
-        let TASA_COP = 3950;
-        let TASA_EUR = 464.03;
+        let T_USD = 405.35; // Valores por defecto
+        let T_EUR = 476.70;
+        let T_COP = 3950;
 
-        async function iniciar() {
+        async function cargarTodo() {
             try {
                 const res = await fetch(SHEET_URL);
                 const csv = await res.text();
                 const filas = csv.split('\n').map(f => f.split(','));
-                
-                // Buscador de tasas en el Excel
-                filas.forEach(col => {
-                    const texto = col.join(" ").toUpperCase();
-                    if(texto.includes("BS")) TASA_BS = parseFloat(col[col.length-1]) || TASA_BS;
-                    if(texto.includes("COP")) TASA_COP = parseFloat(col[col.length-1]) || TASA_COP;
-                    if(texto.includes("EUR")) TASA_EUR = parseFloat(col[col.length-1]) || TASA_EUR;
+
+                // BUSCAR TASAS EN LA DB (Pestaña Tasas_Cambio)
+                filas.forEach(f => {
+                    const id = f[0]?.trim();
+                    const val = parseFloat(f[1]);
+                    if(id === "USD_BCV") T_USD = val;
+                    if(id === "EUR_BCV") T_EUR = val;
+                    if(id === "COP_TAS") T_COP = val;
                 });
 
-                document.getElementById('tasas-hoy').innerText = `Tasa: $1 = ${TASA_BS} BS | $1 = ${TASA_COP} COP`;
-                
-                const container = document.getElementById('productos-container');
-                document.getElementById('loading').style.display = 'none';
+                document.getElementById('tasas-hoy').innerHTML = 
+                    `BCV: $${T_USD} | €${T_EUR} | COP ${T_COP}`;
 
-                filas.slice(1).forEach(col => {
-                    if (col.length >= 5 && !col.join("").includes("Moneda")) {
-                        const [id, nombre, cat, origen, precio, moneda, stock, img] = col.map(c => c.replace(/"/g, "").trim());
+                // CARGAR PRODUCTOS (Saltando las filas de tasas)
+                const container = document.getElementById('productos-container');
+                filas.forEach(f => {
+                    if (f.length >= 5 && !f[0].includes("_BCV") && !f[0].includes("Identificador") && !f[0].includes("COP_TAS")) {
+                        const [id, nombre, cat, origen, precio, moneda, stock, img] = f.map(c => c.replace(/"/g, "").trim());
                         container.innerHTML += `
                             <div class="card">
-                                <div>
-                                    ${img ? `<img src="${img}" class="img-p">` : ''}
-                                    <small style="color:var(--s)">${cat}</small>
-                                    <h3>${nombre}</h3>
-                                </div>
-                                <div>
-                                    <div style="font-size:1.5em; color:var(--p); margin:10px 0;">${precio} ${moneda}</div>
-                                    <button class="btn-pedido" onclick="irCaja('${nombre}', '${precio}', '${moneda}')">🛒 Comprar</button>
-                                </div>
+                                ${img ? `<img src="${img}" class="img-p">` : ''}
+                                <h3>${nombre}</h3>
+                                <div style="font-size:1.5em; color:var(--p);">${precio} ${moneda}</div>
+                                <button class="btn-pedido" onclick="ir('${nombre}', '${precio}', '${moneda}')">PROCESAR CAJA</button>
                             </div>`;
                     }
                 });
             } catch (e) { console.error(e); }
         }
 
-        function irCaja(p, pr, m) {
-            window.location.href = `caja_registradora.html?p=${encodeURIComponent(p)}&pr=${pr}&m=${m}&bs=${TASA_BS}&cop=${TASA_COP}&eur=${TASA_EUR}`;
+        function ir(p, pr, m) {
+            window.location.href = `caja_registradora.html?p=${encodeURIComponent(p)}&pr=${pr}&m=${m}&bs=${T_USD}&cop=${T_COP}&eur=${T_EUR}`;
         }
-        window.onload = iniciar;
+        window.onload = cargarTodo;
     </script>
 </body>
 </html>
