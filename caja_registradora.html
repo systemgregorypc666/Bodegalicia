@@ -2,61 +2,50 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Caja Registradora - Bodegalicia</title>
+    <title>Caja - Bodegalicia</title>
     <link rel="icon" type="image/x-icon" href="img/logo.ico">
     <style>
-        body { background: #121212; color: white; font-family: sans-serif; padding: 20px; }
-        .caja { background: rgba(255,255,255,0.05); border: 1px solid #00ffcc; border-radius: 20px; padding: 25px; max-width: 400px; margin: 0 auto; }
-        input, select, textarea { width: 100%; padding: 12px; margin: 10px 0; background: #1a1a1a; border: 1px solid #333; color: white; border-radius: 8px; }
-        .btn { width: 100%; background: #00ffcc; color: black; border: none; padding: 15px; border-radius: 10px; font-weight: bold; cursor: pointer; }
+        body { background: #0a0a0a; color: white; font-family: sans-serif; display: flex; justify-content: center; padding: 20px; }
+        .caja { background: #1a1a1a; border: 1px solid #00ffcc; padding: 30px; border-radius: 20px; width: 100%; max-width: 400px; }
+        .resumen { background: rgba(0,255,204,0.1); padding: 15px; border-radius: 10px; margin-bottom: 20px; border-left: 5px solid #00ffcc; }
+        input, select { width: 100%; padding: 12px; margin: 10px 0; background: #000; border: 1px solid #333; color: white; border-radius: 8px; box-sizing: border-box; }
+        .btn { width: 100%; background: #00ffcc; color: black; border: none; padding: 15px; border-radius: 10px; font-weight: bold; cursor: pointer; font-size: 1.1em; }
     </style>
 </head>
 <body>
     <div class="caja">
-        <h2 style="color:#00ffcc; text-align:center;">📑 CAJA REGISTRADORA</h2>
-        <div id="resumen" style="background:rgba(0,85,255,0.2); padding:15px; border-radius:10px; margin-bottom:20px;"></div>
-        
-        <input type="text" id="nombre" placeholder="Tu Nombre">
-        <select id="pago">
-            <option value="BS">Pago Móvil / Transferencia (BS)</option>
-            <option value="COP">Nequi / Efectivo (COP)</option>
-            <option value="USD">Zelle / Efectivo (USD)</option>
-            <option value="EUR">Transferencia Suiza (EUR)</option>
+        <h2 style="color:#00ffcc; text-align:center;">TICKET DE CAJA</h2>
+        <div id="resumen" class="resumen"></div>
+        <input type="text" id="n" placeholder="Nombre completo">
+        <select id="m">
+            <option value="BS">Bolívares (BCV)</option>
+            <option value="COP">Pesos (COP)</option>
+            <option value="USD">Dólares (Zelle/Efectivo)</option>
+            <option value="EUR">Euros (Suiza)</option>
         </select>
-        <select id="entrega" onchange="document.getElementById('divDir').style.display=(this.value=='Delivery'?'block':'none')">
-            <option value="Retiro">Retiro Personal</option>
-            <option value="Delivery">Delivery</option>
-        </select>
-        <div id="divDir" style="display:none;"><textarea id="dir" placeholder="Dirección de entrega"></textarea></div>
-        
-        <button class="btn" onclick="pagar()">✅ CONFIRMAR PEDIDO</button>
-        <p style="text-align:center; font-size:0.7em; color:#444; margin-top:15px;">CONTRIBUYENTE FORMAL SENIAT</p>
+        <button class="btn" onclick="enviar()">ENVIAR A SYSTEM GREGORY PC</button>
+        <p style="text-align:center; font-size:0.7em; color:#555; margin-top:15px;">CONTRIBUYENTE FORMAL SENIAT - RED ANTI-MAFIA</p>
     </div>
 
     <script>
-        const p = new URLSearchParams(window.location.search);
-        const producto = p.get('p');
-        const precio = parseFloat(p.get('pr'));
-        const moneda = p.get('m');
-        const T_BS = parseFloat(p.get('bs'));
-        const T_COP = parseFloat(p.get('cop'));
-        const T_EUR = parseFloat(p.get('eur'));
+        const u = new URLSearchParams(window.location.search);
+        const prod = u.get('p'), precio = parseFloat(u.get('pr')), mon = u.get('m');
+        const tBS = parseFloat(u.get('bs')), tCOP = parseFloat(u.get('cop')), tEUR = parseFloat(u.get('eur'));
 
-        document.getElementById('resumen').innerHTML = `Producto: ${producto}<br>Precio: ${precio} ${moneda}`;
+        document.getElementById('resumen').innerHTML = `<b>Orden:</b> ${prod}<br><b>Precio:</b> ${precio} ${mon}`;
 
-        function pagar() {
-            const cliente = document.getElementById('nombre').value;
-            const met = document.getElementById('pago').value;
-            let final = precio;
-            let mFinal = met;
+        function enviar() {
+            const cliente = document.getElementById('n').value;
+            const pago = document.getElementById('m').value;
+            if(!cliente) return alert("Falta nombre");
 
-            if(met === "BS") final = (precio * T_BS).toFixed(2);
-            if(met === "COP") final = (precio * T_COP).toFixed(0);
-            if(met === "EUR") final = ((precio * T_BS) / T_EUR).toFixed(2);
+            let total = precio;
+            if(pago === "BS") total = (precio * tBS).toFixed(2);
+            if(pago === "COP") total = (precio * tCOP).toLocaleString();
+            if(pago === "EUR") total = ((precio * tBS) / tEUR).toFixed(2);
 
-            const texto = `*BODEGALICIA - TICKET*\nCliente: ${cliente}\nProducto: ${producto}\nTotal: ${final} ${mFinal}\nEntrega: ${document.getElementById('entrega').value}\nProtocolo Anti-Mafia Activo`;
-            window.open(`https://wa.me/584161177334?text=${encodeURIComponent(texto)}`);
+            const msg = `*BODEGALICIA - TICKET*\nCliente: ${cliente}\nProducto: ${prod}\nTotal: ${total} ${pago}\nJusticia por Venancio - Red Anti-Mafia`;
+            window.open(`https://wa.me/584161177334?text=${encodeURIComponent(msg)}`);
         }
     </script>
 </body>
