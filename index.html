@@ -17,10 +17,12 @@
         body {
             background-color: var(--bg-dark);
             color: #ffffff;
-            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            font-family: 'Segoe UI', sans-serif;
             margin: 0;
             padding: 0;
-            line-height: 1.6;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
         }
 
         .header {
@@ -33,15 +35,8 @@
             font-size: 2.8em;
             color: var(--primary);
             text-transform: uppercase;
-            letter-spacing: 2px;
             margin: 0;
             text-shadow: 0 0 15px rgba(0, 255, 204, 0.3);
-        }
-
-        .header p {
-            color: #888;
-            font-style: italic;
-            margin-top: 10px;
         }
 
         .container {
@@ -51,26 +46,32 @@
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
             gap: 25px;
+            flex: 1; /* Empuja el footer hacia abajo */
         }
 
-        /* Tarjeta de Producto */
         .card {
             background: var(--glass);
             backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
             border: 1px solid var(--glass-border);
             border-radius: 20px;
-            padding: 25px;
+            padding: 20px;
             display: flex;
             flex-direction: column;
-            justify-content: space-between;
             transition: all 0.4s ease;
         }
 
         .card:hover {
             transform: translateY(-10px);
             border-color: var(--primary);
-            box-shadow: 0 10px 30px rgba(0, 255, 204, 0.1);
+        }
+
+        .img-producto {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            border-radius: 12px;
+            margin-bottom: 15px;
+            border: 1px solid var(--glass-border);
         }
 
         .categoria {
@@ -78,40 +79,16 @@
             font-size: 0.75em;
             font-weight: bold;
             text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        .card h3 {
-            margin: 10px 0;
-            font-size: 1.5em;
-            color: #fff;
-        }
-
-        .origen {
-            font-size: 0.85em;
-            background: rgba(0, 85, 255, 0.1);
-            padding: 4px 10px;
-            border-radius: 5px;
-            color: #aaa;
-            display: inline-block;
-            margin-bottom: 10px;
-        }
-
-        .precio-box {
-            margin-top: 20px;
-            border-top: 1px solid var(--glass-border);
-            padding-top: 15px;
         }
 
         .precio-valor {
             font-size: 1.8em;
             color: var(--primary);
             font-weight: 800;
-            margin-bottom: 15px;
+            margin: 15px 0;
         }
 
         .btn-pedido {
-            display: block;
             background: var(--secondary);
             color: white;
             border: none;
@@ -119,38 +96,40 @@
             border-radius: 12px;
             font-weight: bold;
             cursor: pointer;
-            transition: 0.3s;
             text-align: center;
             text-decoration: none;
-            font-size: 1em;
         }
 
-        .btn-pedido:hover {
-            background: #0044cc;
-            box-shadow: 0 0 20px rgba(0, 85, 255, 0.4);
-        }
-
-        #loading {
+        /* Estilo del Footer solicitado */
+        footer {
             text-align: center;
-            margin-top: 50px;
-            color: var(--primary);
-            font-size: 1.2em;
-            letter-spacing: 1px;
+            padding: 30px;
+            background: rgba(0,0,0,0.3);
+            border-top: 1px solid var(--glass-border);
+            color: #888;
+            font-size: 0.9em;
+            margin-top: 40px;
         }
+
+        #loading { text-align: center; padding: 50px; color: var(--primary); }
     </style>
 </head>
 <body>
 
     <div class="header">
         <h1>Bodegalicia</h1>
-        <p>Economía Real y Justa • Herencia para Alicia</p>
+        <p>Economía Real y Justa • San Cristóbal</p>
     </div>
 
     <div id="loading">Conectando con la base de datos de System Gregory PC...</div>
+    
     <div class="container" id="productos-container"></div>
 
+    <footer>
+        2026 @ Bodegalicia - Desarrollado por **System Gregory PC**
+    </footer>
+
     <script>
-        // Tu enlace de Google Sheets (CSV)
         const SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQKmBLmpMK79baNFgQ3DqYnnWnQwOtW9IXnHdxDVAeohbx_zCE440RUVv7Ep5_2Sd1vHmpjgicXQATw/pub?output=csv';
 
         async function cargarInventario() {
@@ -160,61 +139,47 @@
             try {
                 const response = await fetch(SHEET_URL);
                 const data = await response.text();
-                
-                // Dividimos el contenido por filas
                 const filas = data.split('\n').slice(1); 
                 
                 loading.style.display = 'none';
                 container.innerHTML = '';
 
                 filas.forEach(fila => {
-                    // Separar columnas por comas
                     const columnas = fila.split(',');
-                    
                     if (columnas.length >= 6) {
                         const [id, nombre, categoria, origen, precio, moneda, stock, img, desc] = columnas;
 
-                        const cardHTML = `
+                        // Lógica de imagen: si no hay URL, no se muestra el espacio
+                        const imagenHTML = img && img.trim() !== "" 
+                            ? `<img src="${img}" class="img-producto" alt="${nombre}">` 
+                            : "";
+
+                        container.innerHTML += `
                             <div class="card">
-                                <div>
-                                    <span class="categoria">${categoria}</span>
-                                    <h3>${nombre}</h3>
-                                    <span class="origen">📍 Origen: ${origen}</span>
-                                    <p>${desc || "Producto fresco de calidad garantizada bajo Protocolo Anti-Mafia."}</p>
-                                </div>
-                                <div class="precio-box">
-                                    <div class="precio-valor">${precio} ${moneda}</div>
-                                    <button class="btn-pedido" onclick="enviarWhatsApp('${nombre}', '${precio}', '${moneda}')">
-                                        🛒 Hacer Pedido
-                                    </button>
-                                </div>
+                                ${imagenHTML}
+                                <span class="categoria">${categoria}</span>
+                                <h3>${nombre}</h3>
+                                <small style="color:#aaa">📍 Origen: ${origen}</small>
+                                <p style="font-size:0.9em; color:#ddd">${desc || "Calidad garantizada."}</p>
+                                <div class="precio-valor">${precio} ${moneda}</div>
+                                <button class="btn-pedido" onclick="enviarWhatsApp('${nombre}', '${precio}', '${moneda}')">
+                                    🛒 Hacer Pedido
+                                </button>
                             </div>
                         `;
-                        container.innerHTML += cardHTML;
                     }
                 });
-
-            } catch (error) {
-                console.error('Error:', error);
-                loading.innerText = '⚠️ Error: No se pudo cargar el inventario real.';
+            } catch (e) {
+                loading.innerText = '⚠️ Error al cargar datos.';
             }
         }
 
-        function enviarWhatsApp(producto, precio, moneda) {
-            const miTelefono = "584161177334";
-            const texto = `*BODEGALICIA - NUEVO PEDIDO*\n` +
-                          `----------------------------\n` +
-                          `*Producto:* ${producto}\n` +
-                          `*Precio:* ${precio} ${moneda}\n` +
-                          `*Estado:* Protocolo Anti-Mafia Activo\n` +
-                          `----------------------------\n` +
-                          `Hola José Gregorio, quiero realizar este pedido.`;
-
-            const url = `https://wa.me/${miTelefono}?text=${encodeURIComponent(texto)}`;
-            window.open(url, '_blank');
+        function enviarWhatsApp(p, pr, m) {
+            const tel = "584161177334";
+            const msg = `*BODEGALICIA*\nNuevo pedido: *${p}*\nPrecio: ${pr} ${m}\nProtocolo Anti-Mafia Activo.`;
+            window.open(`https://wa.me/${tel}?text=${encodeURIComponent(msg)}`, '_blank');
         }
 
-        // Ejecutar al cargar la página
         window.onload = cargarInventario;
     </script>
 </body>
