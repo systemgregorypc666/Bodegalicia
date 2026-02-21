@@ -32,9 +32,9 @@
             width: 100%; padding: 12px; margin-top: 5px; 
             background: #000; border: 1px solid #333; 
             color: white; border-radius: 8px; box-sizing: border-box; 
-            outline: none;
+            outline: none; font-size: 1em;
         }
-        input:focus { border-color: #00ffcc; }
+        input:focus, select:focus { border-color: #00ffcc; }
         .btn-enviar { 
             width: 100%; background: #00ffcc; color: black; 
             border: none; padding: 15px; border-radius: 10px; 
@@ -50,18 +50,18 @@
 
     <div class="caja-contenedor">
         <h2>SISTEMA DE COBRO</h2>
-        <div id="resumen" class="resumen-compra">Validando pedido...</div>
+        <div id="resumen" class="resumen-compra">Sincronizando con System Gregory PC...</div>
 
         <form id="formCaja">
             <label>Nombre del Cliente</label>
-            <input type="text" id="clienteNombre" placeholder="Nombre y Apellido" required>
+            <input type="text" id="clienteNombre" placeholder="Nombre completo del pagador" required>
 
-            <label>Moneda de Pago</label>
+            <label>Método de Pago</label>
             <select id="monedaPago">
-                <option value="BS">Bolívares (Tasa BCV)</option>
-                <option value="COP">Pesos Colombianos (COP)</option>
-                <option value="USD">Dólares (Zelle / Efectivo)</option>
-                <option value="EUR">Euros (Suiza / Europa)</option>
+                <option value="Pago Movil - transferencia efectivo">Pago Móvil / Transferencia (BS)</option>
+                <option value="Pesos Colombianos - transferencia efectivo / Nequi">Pesos Colombianos / Nequi (COP)</option>
+                <option value="Dolares - transferencia efectivo / Zelle">Dólares Efectivo / Zelle (USD)</option>
+                <option value="Euros - transferencia efectivo / Suiza">Euros / Transferencia Suiza (EUR)</option>
             </select>
 
             <label>Método de Entrega</label>
@@ -72,7 +72,7 @@
 
             <div id="dirBloque" style="display:none;">
                 <label>Dirección Detallada</label>
-                <textarea id="direccion" rows="2" placeholder="Punto de referencia para el despacho..."></textarea>
+                <textarea id="direccion" rows="2" placeholder="Indique calle, casa y punto de referencia..."></textarea>
             </div>
 
             <button type="button" class="btn-enviar" onclick="procesarTicket()">
@@ -94,15 +94,14 @@
         const urlParams = new URLSearchParams(window.location.search);
         const productoNombre = urlParams.get('p') || "Producto";
         
-        // El resumen solo muestra el producto para mantener la discreción
         document.getElementById('resumen').innerHTML = `
             <strong>Orden:</strong> ${productoNombre}<br>
-            <em>Procesando bajo protocolo System Gregory PC</em>
+            <em>Procesando bajo protocolo de seguridad</em>
         `;
 
         function procesarTicket() {
             const nombre = document.getElementById('clienteNombre').value;
-            const moneda = document.getElementById('monedaPago').value;
+            const metodo = document.getElementById('monedaPago').value;
             const entrega = document.getElementById('metodoEntrega').value;
             const dir = document.getElementById('direccion').value;
 
@@ -110,12 +109,11 @@
 
             const telefonoEncargado = "584161177334";
             
-            // TICKET SIN MONTO TOTAL POR SEGURIDAD Y DISCRECIÓN
             const mensajeWA = `*BODEGALICIA - TICKET DE VENTA*\n` +
                               `--------------------------\n` +
                               `*Cliente:* ${nombre}\n` +
                               `*Producto:* ${productoNombre}\n` +
-                              `*Moneda Seleccionada:* ${moneda}\n` +
+                              `*Método:* ${metodo}\n` +
                               `*Entrega:* ${entrega}\n` +
                               (entrega === "Delivery" ? `*Dir:* ${dir}\n` : "") +
                               `--------------------------\n` +
