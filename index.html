@@ -7,14 +7,19 @@
     <link rel="icon" type="image/x-icon" href="img/logo.ico">
     <style>
         :root { --p: #00ffcc; --s: #0055ff; --bg: #0a0a0a; }
-        body { background: var(--bg); color: white; font-family: 'Segoe UI', sans-serif; margin: 0; }
+        body { background: var(--bg); color: white; font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; flex-direction: column; min-height: 100vh; }
         .header { text-align: center; padding: 30px; background: linear-gradient(180deg, #1a1a1a, var(--bg)); border-bottom: 2px solid var(--p); }
         .logo-principal { width: 120px; border-radius: 50%; border: 2px solid var(--p); margin-bottom: 10px; }
-        .tasa-box { background: rgba(0,255,204,0.1); border: 1px solid var(--p); padding: 10px; border-radius: 10px; display: inline-block; margin-top: 10px; font-family: monospace; }
-        .container { max-width: 1200px; margin: 0 auto; padding: 20px; display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
-        .card { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; padding: 20px; text-align: center; }
-        .img-p { width: 100%; height: 180px; object-fit: cover; border-radius: 12px; }
-        .btn-pedido { background: var(--s); color: white; border: none; padding: 12px 25px; border-radius: 10px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 15px; }
+        .tasa-box { background: rgba(0,255,204,0.1); border: 1px solid var(--p); padding: 10px; border-radius: 10px; display: inline-block; margin-top: 10px; font-family: monospace; font-size: 0.9em; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; flex: 1; }
+        .card { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; padding: 20px; text-align: center; transition: 0.3s; display: flex; flex-direction: column; justify-content: space-between; }
+        .card:hover { border-color: var(--p); transform: translateY(-5px); }
+        .img-p { width: 100%; height: 180px; object-fit: cover; border-radius: 12px; margin-bottom: 15px; }
+        .btn-pedido { background: var(--s); color: white; border: none; padding: 12px; border-radius: 10px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 10px; }
+        
+        /* LA FIRMA QUE SOLICITASTE */
+        footer { text-align: center; padding: 25px; color: #666; font-size: 0.85em; border-top: 1px solid #222; margin-top: 40px; }
+        .red-am { color: var(--p); font-weight: bold; display: block; margin-bottom: 5px; }
     </style>
 </head>
 <body>
@@ -23,12 +28,19 @@
         <h1>BODEGALICIA</h1>
         <div id="tasas-hoy" class="tasa-box">Sincronizando BCV...</div>
     </div>
+
     <div class="container" id="productos-container"></div>
+
+    <footer>
+        <span class="red-am">SISTEMA REGIONAL ANTI-MAFIA ACTIVO</span>
+        2026 @ Bodegalicia - Desarrollado por **System Gregory PC** para Alicia.
+    </footer>
 
     <script>
         const SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQKmBLmpMK79baNFgQ3DqYnnWnQwOtW9IXnHdxDVAeohbx_zCE440RUVv7Ep5_2Sd1vHmpjgicXQATw/pub?output=csv';
         
-        let T_USD = 405.35; // Valores por defecto
+        // Tasas base (se actualizan desde el Excel)
+        let T_USD = 405.35; 
         let T_EUR = 476.70;
         let T_COP = 3950;
 
@@ -36,38 +48,48 @@
             try {
                 const res = await fetch(SHEET_URL);
                 const csv = await res.text();
-                const filas = csv.split('\n').map(f => f.split(','));
+                // Usamos una expresión regular para separar por comas respetando las que están dentro de comillas
+                const filas = csv.split('\n').map(f => f.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g) || []);
 
-                // BUSCAR TASAS EN LA DB (Pestaña Tasas_Cambio)
+                // 1. EXTRAER TASAS DE LA DB
                 filas.forEach(f => {
-                    const id = f[0]?.trim();
-                    const val = parseFloat(f[1]);
+                    const id = f[0]?.replace(/"/g, "").trim();
+                    const val = parseFloat(f[1]?.replace(/"/g, ""));
                     if(id === "USD_BCV") T_USD = val;
                     if(id === "EUR_BCV") T_EUR = val;
                     if(id === "COP_TAS") T_COP = val;
                 });
 
                 document.getElementById('tasas-hoy').innerHTML = 
-                    `BCV: $${T_USD} | €${T_EUR} | COP ${T_COP}`;
+                    `OFICIAL BCV: $${T_USD} | €${T_EUR} | COP ${T_COP}`;
 
-                // CARGAR PRODUCTOS (Saltando las filas de tasas)
+                // 2. CARGAR PRODUCTOS
                 const container = document.getElementById('productos-container');
                 filas.forEach(f => {
+                    // Solo procesamos filas que tengan datos y no sean identificadores de tasa
                     if (f.length >= 5 && !f[0].includes("_BCV") && !f[0].includes("Identificador") && !f[0].includes("COP_TAS")) {
-                        const [id, nombre, cat, origen, precio, moneda, stock, img] = f.map(c => c.replace(/"/g, "").trim());
-                        container.innerHTML += `
-                            <div class="card">
-                                ${img ? `<img src="${img}" class="img-p">` : ''}
-                                <h3>${nombre}</h3>
-                                <div style="font-size:1.5em; color:var(--p);">${precio} ${moneda}</div>
-                                <button class="btn-pedido" onclick="ir('${nombre}', '${precio}', '${moneda}')">PROCESAR CAJA</button>
-                            </div>`;
+                        const [id, nombre, cat, origen, precio, moneda, stock, img] = f.map(c => c?.replace(/"/g, "").trim());
+                        if(nombre && precio) {
+                            container.innerHTML += `
+                                <div class="card">
+                                    <div>
+                                        ${img ? `<img src="${img}" class="img-p">` : ''}
+                                        <small style="color:var(--p)">${cat}</small>
+                                        <h3 style="margin:10px 0;">${nombre}</h3>
+                                    </div>
+                                    <div>
+                                        <div style="font-size:1.6em; color:var(--p); font-weight:bold;">${precio} ${moneda}</div>
+                                        <button class="btn-pedido" onclick="ir('${nombre}', '${precio}', '${moneda}')">🛒 SELECCIONAR</button>
+                                    </div>
+                                </div>`;
+                        }
                     }
                 });
-            } catch (e) { console.error(e); }
+            } catch (e) { console.error("Error en System Gregory PC:", e); }
         }
 
         function ir(p, pr, m) {
+            // Pasamos las tasas detectadas a la caja registradora
             window.location.href = `caja_registradora.html?p=${encodeURIComponent(p)}&pr=${pr}&m=${m}&bs=${T_USD}&cop=${T_COP}&eur=${T_EUR}`;
         }
         window.onload = cargarTodo;
