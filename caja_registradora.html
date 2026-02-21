@@ -5,109 +5,57 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Caja Registradora - Bodegalicia</title>
     <style>
-        body { background: #121212; color: white; font-family: 'Segoe UI', sans-serif; padding: 20px; }
-        .caja-card {
-            background: rgba(255,255,255,0.05);
-            border: 1px solid #00ffcc;
-            border-radius: 20px;
-            padding: 25px;
-            max-width: 450px;
-            margin: 0 auto;
-        }
-        h2 { color: #00ffcc; text-align: center; margin-bottom: 20px; border-bottom: 1px solid #333; padding-bottom: 10px; }
-        .resumen-item { background: rgba(0,85,255,0.1); padding: 15px; border-radius: 10px; margin-bottom: 20px; }
-        label { display: block; margin-top: 15px; color: #aaa; font-size: 0.85em; }
-        input, select, textarea {
-            width: 100%; padding: 12px; margin-top: 5px;
-            background: #1a1a1a; border: 1px solid #333;
-            color: white; border-radius: 8px; box-sizing: border-box;
-        }
-        .btn-confirmar {
-            width: 100%; background: #00ffcc; color: #000;
-            border: none; padding: 15px; margin-top: 25px;
-            border-radius: 10px; font-weight: bold; cursor: pointer;
-        }
-        .seniat-footer { text-align: center; color: #444; font-size: 0.7em; margin-top: 20px; }
+        body { background: #121212; color: white; font-family: sans-serif; padding: 20px; }
+        .caja { background: rgba(255,255,255,0.05); border: 1px solid #00ffcc; border-radius: 20px; padding: 25px; max-width: 400px; margin: 0 auto; }
+        input, select, textarea { width: 100%; padding: 12px; margin: 10px 0; background: #1a1a1a; border: 1px solid #333; color: white; border-radius: 8px; }
+        .btn { width: 100%; background: #00ffcc; color: black; border: none; padding: 15px; border-radius: 10px; font-weight: bold; cursor: pointer; }
     </style>
 </head>
 <body>
-    <div class="caja-card">
-        <h2>📑 CAJA REGISTRADORA</h2>
-        <div class="resumen-item" id="resumen">Cargando datos del pedido...</div>
-
-        <form id="formPedido">
-            <label>Nombre y Apellido</label>
-            <input type="text" id="nombre" placeholder="Nombre del cliente" required>
-
-            <label>Forma de Pago</label>
-            <select id="pago">
-                <option value="Pago Movil / BS">Pago Móvil / Transferencia (BS)</option>
-                <option value="Nequi / COP">Nequi (COP)</option>
-                <option value="Zelle / USD">Banca EEUU (Zelle)</option>
-                <option value="Suiza / EUR">Suiza (Euro)</option>
-                <option value="Efectivo">Efectivo</option>
-            </select>
-
-            <label>Tipo de Entrega</label>
-            <select id="entrega" onchange="document.getElementById('campoDir').style.display = (this.value=='Delivery'?'block':'none')">
-                <option value="Retiro Personal">Retiro Personal (San Cristóbal)</option>
-                <option value="Delivery">Delivery a Domicilio</option>
-            </select>
-
-            <div id="campoDir" style="display:none;">
-                <label>Dirección de Entrega</label>
-                <textarea id="direccion" placeholder="Calle, punto de referencia..."></textarea>
-            </div>
-
-            <button type="button" class="btn-confirmar" onclick="enviarWhatsApp()">
-                ✅ VALIDAR Y ENVIAR PEDIDO
-            </button>
-        </form>
-        <div class="seniat-footer">BODEGALICIA - CONTRIBUYENTE FORMAL SENIAT</div>
+    <div class="caja">
+        <h2 style="color:#00ffcc; text-align:center;">📑 CAJA REGISTRADORA</h2>
+        <div id="resumen" style="background:rgba(0,85,255,0.2); padding:15px; border-radius:10px; margin-bottom:20px;"></div>
+        
+        <input type="text" id="nombre" placeholder="Tu Nombre">
+        <select id="pago">
+            <option value="BS">Pago Móvil / Transferencia (BS)</option>
+            <option value="COP">Nequi / Efectivo (COP)</option>
+            <option value="USD">Zelle / Efectivo (USD)</option>
+            <option value="EUR">Transferencia Suiza (EUR)</option>
+        </select>
+        <select id="entrega" onchange="document.getElementById('divDir').style.display=(this.value=='Delivery'?'block':'none')">
+            <option value="Retiro">Retiro Personal</option>
+            <option value="Delivery">Delivery</option>
+        </select>
+        <div id="divDir" style="display:none;"><textarea id="dir" placeholder="Dirección de entrega"></textarea></div>
+        
+        <button class="btn" onclick="pagar()">✅ CONFIRMAR PEDIDO</button>
+        <p style="text-align:center; font-size:0.7em; color:#444; margin-top:15px;">CONTRIBUYENTE FORMAL SENIAT</p>
     </div>
 
     <script>
-        const params = new URLSearchParams(window.location.search);
-        const producto = params.get('p') || "Producto";
-        const precioBase = parseFloat(params.get('pr')) || 0;
-        const monedaBase = params.get('m') || "USD";
+        const p = new URLSearchParams(window.location.search);
+        const producto = p.get('p');
+        const precio = parseFloat(p.get('pr'));
+        const moneda = p.get('m');
+        const T_BS = parseFloat(p.get('bs'));
+        const T_COP = parseFloat(p.get('cop'));
+        const T_EUR = parseFloat(p.get('eur'));
 
-        const TASAS = { "BS": 401.83, "COP": 3950, "EUR_REF": 464.03 };
+        document.getElementById('resumen').innerHTML = `Producto: ${producto}<br>Precio: ${precio} ${moneda}`;
 
-        document.getElementById('resumen').innerHTML = `
-            <strong>Orden:</strong> ${producto}<br>
-            <strong>Monto Ref:</strong> ${precioBase} ${monedaBase}
-        `;
-
-        function enviarWhatsApp() {
+        function pagar() {
             const cliente = document.getElementById('nombre').value;
-            const pago = document.getElementById('pago').value;
-            const entrega = document.getElementById('entrega').value;
-            const dir = document.getElementById('direccion').value;
+            const met = document.getElementById('pago').value;
+            let final = precio;
+            let mFinal = met;
 
-            if(!cliente) return alert("Ingrese su nombre");
+            if(met === "BS") final = (precio * T_BS).toFixed(2);
+            if(met === "COP") final = (precio * T_COP).toFixed(0);
+            if(met === "EUR") final = ((precio * T_BS) / T_EUR).toFixed(2);
 
-            let total = precioBase;
-            let simbolo = monedaBase;
-
-            if(pago.includes("BS")) { total = (precioBase * TASAS.BS).toFixed(2); simbolo = "BS"; }
-            else if(pago.includes("COP")) { total = (precioBase * TASAS.COP).toLocaleString(); simbolo = "COP"; }
-            else if(pago.includes("EUR")) { total = ( (precioBase * TASAS.BS) / TASAS.EUR_REF ).toFixed(2); simbolo = "EUR"; }
-
-            const tel = "584161177334";
-            const texto = `*BODEGALICIA - TICKET DE CAJA*\n` +
-                          `--------------------------\n` +
-                          `*Cliente:* ${cliente}\n` +
-                          `*Producto:* ${producto}\n` +
-                          `*Monto Final:* ${total} ${simbolo}\n` +
-                          `*Pago:* ${pago}\n` +
-                          `*Entrega:* ${entrega}\n` +
-                          (entrega=="Delivery" ? `*Dirección:* ${dir}\n` : "") +
-                          `--------------------------\n` +
-                          `*SENIAT: Contribuyente Formal*\n` +
-                          `*System Gregory PC - 2026*`;
-
-            window.open(`https://wa.me/${tel}?text=${encodeURIComponent(texto)}`, '_blank');
+            const texto = `*BODEGALICIA - TICKET*\nCliente: ${cliente}\nProducto: ${producto}\nTotal: ${final} ${mFinal}\nEntrega: ${document.getElementById('entrega').value}\nProtocolo Anti-Mafia Activo`;
+            window.open(`https://wa.me/584161177334?text=${encodeURIComponent(texto)}`);
         }
     </script>
 </body>
