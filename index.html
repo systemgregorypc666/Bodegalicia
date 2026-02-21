@@ -3,10 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bodegalicia - Catálogo de Economía Real</title>
-    
+    <title>Bodegalicia - Economía Real</title>
     <link rel="icon" type="image/x-icon" href="img/logo.ico">
-    
     <style>
         :root {
             --primary: #00ffcc;
@@ -15,117 +13,71 @@
             --glass: rgba(255, 255, 255, 0.05);
             --glass-border: rgba(255, 255, 255, 0.1);
         }
-
         body {
             background-color: var(--bg-dark);
             color: #ffffff;
             font-family: 'Segoe UI', sans-serif;
             margin: 0;
-            padding: 0;
             display: flex;
             flex-direction: column;
             min-height: 100vh;
         }
-
         .header {
             text-align: center;
             padding: 40px 20px;
             background: linear-gradient(180deg, #1a1a1a 0%, var(--bg-dark) 100%);
         }
-
-        /* Estilo para tu nuevo Logo Principal */
         .logo-principal {
-            width: 150px; /* Ajusta el tamaño según prefieras */
+            width: 140px;
             height: auto;
-            border-radius: 50%; /* Si quieres que se vea circular como el diseño */
-            margin-bottom: 20px;
+            border-radius: 50%;
             border: 2px solid var(--primary);
-            box-shadow: 0 0 20px rgba(0, 255, 204, 0.2);
+            margin-bottom: 15px;
         }
-
-        .header h1 {
-            font-size: 2.8em;
-            color: var(--primary);
-            text-transform: uppercase;
-            margin: 0;
-            letter-spacing: 3px;
-        }
-
+        .header h1 { font-size: 2.5em; color: var(--primary); margin: 0; text-transform: uppercase; }
+        .tasa-info { color: #888; font-size: 0.9em; margin-top: 10px; }
         .container {
             max-width: 1200px;
             margin: 0 auto;
             padding: 20px;
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
             gap: 25px;
             flex: 1;
         }
-
         .card {
             background: var(--glass);
-            backdrop-filter: blur(12px);
+            backdrop-filter: blur(10px);
             border: 1px solid var(--glass-border);
             border-radius: 20px;
             padding: 20px;
+            transition: 0.4s;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
-            transition: 0.4s;
         }
-
-        .img-producto {
-            width: 100%;
-            height: 200px;
-            object-fit: cover;
-            border-radius: 12px;
-            margin-bottom: 15px;
-        }
-
-        .precio-valor {
-            font-size: 1.8em;
-            color: var(--primary);
-            font-weight: 800;
-            margin: 15px 0;
-        }
-
+        .card:hover { transform: translateY(-5px); border-color: var(--primary); }
+        .img-producto { width: 100%; height: 180px; object-fit: cover; border-radius: 12px; margin-bottom: 15px; }
+        .precio-valor { font-size: 1.6em; color: var(--primary); font-weight: bold; margin: 10px 0; }
         .btn-pedido {
             background: var(--secondary);
-            color: white;
-            border: none;
-            padding: 15px;
-            border-radius: 12px;
-            font-weight: bold;
-            cursor: pointer;
-            text-align: center;
-            text-decoration: none;
-            width: 100%;
+            color: white; border: none; padding: 12px;
+            border-radius: 10px; font-weight: bold; cursor: pointer; width: 100%;
         }
-
-        footer {
-            text-align: center;
-            padding: 30px;
-            background: rgba(0,0,0,0.3);
-            border-top: 1px solid var(--glass-border);
-            color: #888;
-        }
-
+        footer { text-align: center; padding: 25px; border-top: 1px solid var(--glass-border); color: #666; font-size: 0.8em; }
         #loading { text-align: center; padding: 50px; color: var(--primary); }
     </style>
 </head>
 <body>
-
     <div class="header">
-        <img src="img/logo.jpg" alt="Logo Bodegalicia" class="logo-principal">
+        <img src="img/logo.jpg" alt="Bodegalicia" class="logo-principal">
         <h1>Bodegalicia</h1>
-        <p>Economía Real y Justa • Sistema de Herencia Alicia</p>
+        <div class="tasa-info">Ref: 1 USD = 401.83 BS | 1 EUR = 464.03 BS</div>
     </div>
-
-    <div id="loading">Conectando con la base de datos de System Gregory PC...</div>
-    
+    <div id="loading">Consultando base de datos System Gregory PC...</div>
     <div class="container" id="productos-container"></div>
-
     <footer>
-        2026 @ Bodegalicia - Desarrollado por **System Gregory PC**
+        2026 @ Bodegalicia - Desarrollado por **System Gregory PC** para Alicia.
     </footer>
 
     <script>
@@ -133,56 +85,39 @@
 
         async function cargarInventario() {
             const container = document.getElementById('productos-container');
-            const loading = document.getElementById('loading');
-
             try {
                 const response = await fetch(SHEET_URL);
                 const data = await response.text();
-                const filas = data.split('\n').filter(f => f.trim() !== "").slice(1); 
+                const filas = data.split('\n').filter(f => f.trim() !== "").slice(1);
+                document.getElementById('loading').style.display = 'none';
                 
-                loading.style.display = 'none';
-                container.innerHTML = '';
-
                 filas.forEach(fila => {
-                    const columnas = fila.split(',');
-                    if (columnas.length >= 6) {
-                        const [id, nombre, categoria, origen, precio, moneda, stock, img, desc] = columnas;
-                        
-                        // Limpieza de datos
-                        const n = nombre.replace(/"/g, "").trim();
-                        const p = precio.replace(/"/g, "").trim();
-                        const m = moneda.replace(/"/g, "").trim();
-                        const i = img ? img.replace(/"/g, "").trim() : "";
-
-                        const imagenHTML = i !== "" ? `<img src="${i}" class="img-producto">` : "";
-
+                    const col = fila.split(',');
+                    if (col.length >= 6) {
+                        const [id, nombre, cat, origen, precio, moneda, stock, img, desc] = col.map(c => c.replace(/"/g, "").trim());
                         container.innerHTML += `
                             <div class="card">
                                 <div>
-                                    ${imagenHTML}
-                                    <span style="color:var(--secondary); font-size:0.75em; font-weight:bold;">${categoria.replace(/"/g, "")}</span>
-                                    <h3>${n}</h3>
-                                    <p style="font-size:0.9em; color:#ddd;">${desc ? desc.replace(/"/g, "") : "Calidad System Gregory PC."}</p>
+                                    ${img ? `<img src="${img}" class="img-producto">` : ''}
+                                    <span style="color:var(--secondary); font-size:0.7em; font-weight:bold;">${cat}</span>
+                                    <h3 style="margin:5px 0;">${nombre}</h3>
+                                    <p style="font-size:0.8em; color:#aaa;">📍 ${origen}</p>
                                 </div>
                                 <div>
-                                    <div class="precio-valor">${p} ${m}</div>
-                                    <button class="btn-pedido" onclick="irACaja('${n}', '${p}', '${m}')">
-                                        🛒 Seleccionar
+                                    <div class="precio-valor">${precio} ${moneda}</div>
+                                    <button class="btn-pedido" onclick="irACaja('${nombre}', '${precio}', '${moneda}')">
+                                        🛒 Seleccionar Producto
                                     </button>
                                 </div>
                             </div>
                         `;
                     }
                 });
-            } catch (error) {
-                loading.innerHTML = '⚠️ Error de conexión.';
-            }
+            } catch (e) { document.getElementById('loading').innerText = "Error de conexión."; }
         }
-
-        function irACaja(producto, precio, moneda) {
-            window.location.href = `caja_registradora.html?p=${encodeURIComponent(producto)}&pr=${encodeURIComponent(precio)}&m=${encodeURIComponent(moneda)}`;
+        function irACaja(p, pr, m) {
+            window.location.href = `caja_registradora.html?p=${encodeURIComponent(p)}&pr=${pr}&m=${m}`;
         }
-
         window.onload = cargarInventario;
     </script>
 </body>
