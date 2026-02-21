@@ -4,136 +4,218 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bodegalicia - Catálogo de Economía Real</title>
-    <link rel="stylesheet" href="style.css">
+    
     <style>
         :root {
             --primary: #00ffcc;
             --secondary: #0055ff;
-            --glass: rgba(255, 255, 255, 0.1);
+            --bg-dark: #121212;
+            --glass: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.1);
         }
 
         body {
-            background: #1a1a1a;
-            color: white;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-dark);
+            color: #ffffff;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             margin: 0;
-            padding: 20px;
+            padding: 0;
+            line-height: 1.6;
         }
 
         .header {
             text-align: center;
-            padding: 40px 0;
+            padding: 50px 20px;
+            background: linear-gradient(180deg, #1a1a1a 0%, var(--bg-dark) 100%);
         }
 
         .header h1 {
+            font-size: 2.8em;
             color: var(--primary);
-            text-shadow: 0 0 10px rgba(0,255,204,0.3);
+            text-transform: uppercase;
+            letter-spacing: 2px;
             margin: 0;
+            text-shadow: 0 0 15px rgba(0, 255, 204, 0.3);
+        }
+
+        .header p {
+            color: #888;
+            font-style: italic;
+            margin-top: 10px;
         }
 
         .container {
             max-width: 1200px;
             margin: 0 auto;
+            padding: 20px;
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 20px;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
         }
 
+        /* Tarjeta de Producto */
         .card {
             background: var(--glass);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 15px;
-            padding: 20px;
-            transition: transform 0.3s;
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 25px;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
+            transition: all 0.4s ease;
         }
 
         .card:hover {
-            transform: translateY(-5px);
+            transform: translateY(-10px);
             border-color: var(--primary);
+            box-shadow: 0 10px 30px rgba(0, 255, 204, 0.1);
         }
 
-        .card h3 { margin: 10px 0; color: #fff; }
-        .card .categoria { font-size: 0.8em; color: var(--primary); text-transform: uppercase; }
-        .card .precio { font-size: 1.5em; font-weight: bold; margin: 15px 0; color: #00ffcc; }
-        .card .origen { font-size: 0.9em; color: #888; margin-bottom: 15px; }
+        .categoria {
+            color: var(--secondary);
+            font-size: 0.75em;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .card h3 {
+            margin: 10px 0;
+            font-size: 1.5em;
+            color: #fff;
+        }
+
+        .origen {
+            font-size: 0.85em;
+            background: rgba(0, 85, 255, 0.1);
+            padding: 4px 10px;
+            border-radius: 5px;
+            color: #aaa;
+            display: inline-block;
+            margin-bottom: 10px;
+        }
+
+        .precio-box {
+            margin-top: 20px;
+            border-top: 1px solid var(--glass-border);
+            padding-top: 15px;
+        }
+
+        .precio-valor {
+            font-size: 1.8em;
+            color: var(--primary);
+            font-weight: 800;
+            margin-bottom: 15px;
+        }
 
         .btn-pedido {
+            display: block;
             background: var(--secondary);
             color: white;
             border: none;
-            padding: 12px;
-            border-radius: 8px;
-            cursor: pointer;
+            padding: 15px;
+            border-radius: 12px;
             font-weight: bold;
-            text-decoration: none;
+            cursor: pointer;
+            transition: 0.3s;
             text-align: center;
+            text-decoration: none;
+            font-size: 1em;
         }
 
-        .btn-pedido:hover { background: #0044cc; }
+        .btn-pedido:hover {
+            background: #0044cc;
+            box-shadow: 0 0 20px rgba(0, 85, 255, 0.4);
+        }
 
-        #loading { text-align: center; font-size: 1.2em; color: var(--primary); }
+        #loading {
+            text-align: center;
+            margin-top: 50px;
+            color: var(--primary);
+            font-size: 1.2em;
+            letter-spacing: 1px;
+        }
     </style>
 </head>
 <body>
 
     <div class="header">
         <h1>Bodegalicia</h1>
-        <p>Economía Real y Justa para San Cristóbal</p>
+        <p>Economía Real y Justa • Herencia para Alicia</p>
     </div>
 
-    <div id="loading">Cargando productos de la base de datos...</div>
+    <div id="loading">Conectando con la base de datos de System Gregory PC...</div>
     <div class="container" id="productos-container"></div>
 
     <script>
-        const sheetUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQKmBLmpMK79baNFgQ3DqYnnWnQwOtW9IXnHdxDVAeohbx_zCE440RUVv7Ep5_2Sd1vHmpjgicXQATw/pub?output=csv';
+        // Tu enlace de Google Sheets (CSV)
+        const SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQKmBLmpMK79baNFgQ3DqYnnWnQwOtW9IXnHdxDVAeohbx_zCE440RUVv7Ep5_2Sd1vHmpjgicXQATw/pub?output=csv';
 
-        async function cargarProductos() {
+        async function cargarInventario() {
+            const container = document.getElementById('productos-container');
+            const loading = document.getElementById('loading');
+
             try {
-                const response = await fetch(sheetUrl);
+                const response = await fetch(SHEET_URL);
                 const data = await response.text();
-                const filas = data.split('\n').slice(1); // Omitir encabezados
-                const container = document.getElementById('productos-container');
-                document.getElementById('loading').style.display = 'none';
+                
+                // Dividimos el contenido por filas
+                const filas = data.split('\n').slice(1); 
+                
+                loading.style.display = 'none';
+                container.innerHTML = '';
 
                 filas.forEach(fila => {
+                    // Separar columnas por comas
                     const columnas = fila.split(',');
-                    if(columnas.length < 5) return;
+                    
+                    if (columnas.length >= 6) {
+                        const [id, nombre, categoria, origen, precio, moneda, stock, img, desc] = columnas;
 
-                    const [id, nombre, categoria, origen, precio, moneda, stock, img, desc] = columnas;
-
-                    const card = document.createElement('div');
-                    card.className = 'card';
-                    card.innerHTML = `
-                        <div>
-                            <span class="categoria">${categoria}</span>
-                            <h3>${nombre}</h3>
-                            <p class="origen">Origen: ${origen}</p>
-                            <p>${desc || 'Producto de alta calidad.'}</p>
-                        </div>
-                        <div>
-                            <div class="precio">${precio} ${moneda}</div>
-                            <button class="btn-pedido" onclick="hacerPedido('${nombre}', '${precio}', '${moneda}')">Pedir por WhatsApp</button>
-                        </div>
-                    `;
-                    container.appendChild(card);
+                        const cardHTML = `
+                            <div class="card">
+                                <div>
+                                    <span class="categoria">${categoria}</span>
+                                    <h3>${nombre}</h3>
+                                    <span class="origen">📍 Origen: ${origen}</span>
+                                    <p>${desc || "Producto fresco de calidad garantizada bajo Protocolo Anti-Mafia."}</p>
+                                </div>
+                                <div class="precio-box">
+                                    <div class="precio-valor">${precio} ${moneda}</div>
+                                    <button class="btn-pedido" onclick="enviarWhatsApp('${nombre}', '${precio}', '${moneda}')">
+                                        🛒 Hacer Pedido
+                                    </button>
+                                </div>
+                            </div>
+                        `;
+                        container.innerHTML += cardHTML;
+                    }
                 });
+
             } catch (error) {
-                console.error('Error cargando base de datos:', error);
-                document.getElementById('loading').innerText = 'Error al conectar con la base de datos.';
+                console.error('Error:', error);
+                loading.innerText = '⚠️ Error: No se pudo cargar el inventario real.';
             }
         }
 
-        function hacerPedido(producto, precio, moneda) {
-            const tel = "584161177334";
-            const msg = `Hola Bodegalicia, deseo un pedido:\nProducto: ${producto}\nPrecio: ${precio} ${moneda}\nProtocolo Anti-Mafia Activo.`;
-            window.open(`https://wa.me/${tel}?text=${encodeURIComponent(msg)}`, '_blank');
+        function enviarWhatsApp(producto, precio, moneda) {
+            const miTelefono = "584161177334";
+            const texto = `*BODEGALICIA - NUEVO PEDIDO*\n` +
+                          `----------------------------\n` +
+                          `*Producto:* ${producto}\n` +
+                          `*Precio:* ${precio} ${moneda}\n` +
+                          `*Estado:* Protocolo Anti-Mafia Activo\n` +
+                          `----------------------------\n` +
+                          `Hola José Gregorio, quiero realizar este pedido.`;
+
+            const url = `https://wa.me/${miTelefono}?text=${encodeURIComponent(texto)}`;
+            window.open(url, '_blank');
         }
 
-        cargarProductos();
+        // Ejecutar al cargar la página
+        window.onload = cargarInventario;
     </script>
 </body>
 </html>
